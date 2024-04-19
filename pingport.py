@@ -34,7 +34,7 @@ print(sys.version)
 print(sys.executable)
 timestamp = time.strftime('[%Y-%m-%d %H:%M:%S pingport started]')
 print(timestamp)
-print("press space for next ping")
+print("press f1 for next ping")
 
 def sleep(i):
 	while i:
@@ -44,7 +44,7 @@ def sleep(i):
 		while j:
 			j = j - 1
 			time.sleep(0.1)
-			if (keyboard.is_pressed('space')):
+			if (keyboard.is_pressed('f1')):
 				print('next ping')
 				i = 0
 				j = 0
