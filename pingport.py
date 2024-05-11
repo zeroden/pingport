@@ -26,9 +26,10 @@ def DupeConsoleToFile(filepath):
 			pass
 
 	sys.stdout = Logger()
+	# no necessary, but redirect errors too
+	sys.stderr = sys.stdout
 
 logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
-origstdout = sys.stdout
 DupeConsoleToFile(logfilename)
 timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
 print(time.strftime(timedate_stamp + ' pingport started'))
@@ -86,7 +87,7 @@ while True:
 			print('%s +%d hours' % (timedate_stamp, timediff))
 		else:
 			if ping_hour_attempts == ping_hour_ok:
-				print(timedate_stamp + ' hour uptime 100%, %d outof %d %s' % (ping_hour_ok, ping_hour_attempts, ping_fails_str))
+				print(timedate_stamp + ' hour uptime 100%%, %d outof %d %s' % (ping_hour_ok, ping_hour_attempts, ping_fails_str))
 			else:
 				print(timedate_stamp + ' hour partial uptime %s%%, %d outof %d %s' % (perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
 		# reset hour counters
@@ -100,7 +101,7 @@ while True:
 		timemark_prev_day = timemark_now
 		perc = percentage(ping_day_attempts, ping_day_ok)
 		if ping_day_attempts == ping_day_ok:
-			print(timedate_stamp + ' day uptime 100%, %d outof %d %s' % (ping_day_ok, ping_day_attempts, ping_fails_str))
+			print(timedate_stamp + ' day uptime 100%%, %d outof %d %s' % (ping_day_ok, ping_day_attempts, ping_fails_str))
 		else:
 			print(timedate_stamp + ' day partial uptime %s%%, %d outof %d %s' % (perc, ping_day_ok, ping_day_attempts, ping_fails_str))
 		# reset day counters
