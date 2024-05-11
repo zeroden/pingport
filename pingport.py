@@ -84,12 +84,12 @@ while True:
 		timemark_prev_hour = timemark_now
 		perc = percentage(ping_hour_attempts, ping_hour_ok)
 		if (timediff >= 2):
-			print('%s +%d hours' % (timedate_stamp, timediff))
+			print(timedate_stamp + ' +%d hours' % timediff)
 		else:
-			if ping_hour_attempts == ping_hour_ok:
-				print(timedate_stamp + ' hour uptime 100%%, %d outof %d %s' % (ping_hour_ok, ping_hour_attempts, ping_fails_str))
-			else:
-				print(timedate_stamp + ' hour partial uptime %s%%, %d outof %d %s' % (perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
+			partial = ''
+			if ping_hour_attempts != ping_hour_ok:
+				partial = ' partial'
+			print(timedate_stamp + ' hour%s uptime %s%%, %d outof %d %s' % (partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
 		# reset hour counters
 		ping_hour_attempts = 0
 		ping_hour_ok = 0
@@ -100,10 +100,10 @@ while True:
 		# reset day marker
 		timemark_prev_day = timemark_now
 		perc = percentage(ping_day_attempts, ping_day_ok)
-		if ping_day_attempts == ping_day_ok:
-			print(timedate_stamp + ' day uptime 100%%, %d outof %d %s' % (ping_day_ok, ping_day_attempts, ping_fails_str))
-		else:
-			print(timedate_stamp + ' day partial uptime %s%%, %d outof %d %s' % (perc, ping_day_ok, ping_day_attempts, ping_fails_str))
+		partial = ''
+		if ping_day_attempts != ping_day_ok:
+			partial = ' partial'
+		print(timedate_stamp + ' day%s uptime %s%%, %d outof %d %s' % (partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
 		# reset day counters
 		ping_day_attempts = 0
 		ping_day_ok = 0
