@@ -72,38 +72,43 @@ ping_hour_attempts = 0
 ping_day_attempts = 0
 ping_hour_ok = 0
 ping_day_ok = 0
+hour_count = 0
+day_count = 0
+
 while True:
 	time_stamp = time.strftime('%H:%M:%S')
 	timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
 	timemark_now = time.time()
 
 	# print hour stat
-	timediff = (timemark_now - timemark_prev_hour) / 3600
-	if (timediff >= 1):
+	hour_timediff = (timemark_now - timemark_prev_hour) / 3600
+	if (hour_timediff >= 1):
 		# reset hour marker
 		timemark_prev_hour = timemark_now
 		perc = percentage(ping_hour_attempts, ping_hour_ok)
-		if (timediff >= 2):
-			print(timedate_stamp + ' +%d hours' % timediff)
+		if (hour_timediff >= 2):
+			print(timedate_stamp + ' +%d hours' % hour_timediff)
 		else:
+			hour_count += 1
 			partial = ''
 			if ping_hour_attempts != ping_hour_ok:
 				partial = ' partial'
-			print(timedate_stamp + ' hour%s uptime %s%%, %d outof %d %s' % (partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
+			print(timedate_stamp + ' hour%d%s uptime %s%%, %d outof %d %s' % (hour_count, partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
 		# reset hour counters
 		ping_hour_attempts = 0
 		ping_hour_ok = 0
 
 	# print day stat
-	timediff = (timemark_now - timemark_prev_day) / 3600
-	if (timediff >= 24):
+	day_timediff = (timemark_now - timemark_prev_day) / 3600
+	if (day_timediff >= 24):
 		# reset day marker
 		timemark_prev_day = timemark_now
 		perc = percentage(ping_day_attempts, ping_day_ok)
+		day_count += 1
 		partial = ''
 		if ping_day_attempts != ping_day_ok:
 			partial = ' partial'
-		print(timedate_stamp + ' day%s uptime %s%%, %d outof %d %s' % (partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
+		print(timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
 		# reset day counters
 		ping_day_attempts = 0
 		ping_day_ok = 0
