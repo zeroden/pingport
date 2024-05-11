@@ -27,14 +27,14 @@ def DupeConsoleToFile(filepath):
 
 	sys.stdout = Logger()
 
-timestamp = time.strftime('%Y%m%d_%H%M%S_pingport.log')
+logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
 origstdout = sys.stdout
-DupeConsoleToFile(timestamp)
-print(sys.version)
-print(sys.executable)
+DupeConsoleToFile(logfilename)
+timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
+print(time.strftime(timedate_stamp + ' pingport started'))
+print('python version: "%s"' % sys.version)
+print('python path: "%s"' % sys.executable)
 print("Press F1 for a manual ping")
-timestamp = time.strftime('[%Y-%m-%d %H:%M:%S pingport started]')
-print(timestamp)
 
 ping_series_ok = 0
 ping_fails = 0
@@ -72,22 +72,23 @@ ping_day_attempts = 0
 ping_hour_ok = 0
 ping_day_ok = 0
 while True:
-	timestamp = time.strftime('%H:%M:%S')
+	time_stamp = time.strftime('%H:%M:%S')
+	timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
 	timemark_now = time.time()
 
-	timediff = (timemark_now - timemark_prev_hour) / 3600
 	# print hour stat
+	timediff = (timemark_now - timemark_prev_hour) / 3600
 	if (timediff >= 1):
 		# reset hour marker
 		timemark_prev_hour = timemark_now
 		perc = percentage(ping_hour_attempts, ping_hour_ok)
 		if (timediff >= 2):
-			print('%s +%d hours' % (time.strftime('[%Y-%m-%d %H:%M:%S]'), timediff))
+			print('%s +%d hours' % (timedate_stamp, timediff))
 		else:
 			if ping_hour_attempts == ping_hour_ok:
-				print(time.strftime('[%Y-%m-%d %H:%M:%S]') + ' hour uptime 100%' + ping_fails_str)
+				print(timedate_stamp + ' hour uptime 100%, %d outof %d %s' % (ping_hour_ok, ping_hour_attempts, ping_fails_str))
 			else:
-				print(time.strftime('[%Y-%m-%d %H:%M:%S]') + ' hour partial uptime %s%%' % perc + ping_fails_str)
+				print(timedate_stamp + ' hour partial uptime %s%%, %d outof %d %s' % (perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
 		# reset hour counters
 		ping_hour_attempts = 0
 		ping_hour_ok = 0
@@ -99,9 +100,9 @@ while True:
 		timemark_prev_day = timemark_now
 		perc = percentage(ping_day_attempts, ping_day_ok)
 		if ping_day_attempts == ping_day_ok:
-			print(time.strftime('[%Y-%m-%d %H:%M:%S]') + ' day uptime 100%' + ping_fails_str)
+			print(timedate_stamp + ' day uptime 100%, %d outof %d %s' % (ping_day_ok, ping_day_attempts, ping_fails_str))
 		else:
-			print(time.strftime('[%Y-%m-%d %H:%M:%S]') + ' day partial uptime %s%%' % perc + ping_fails_str)
+			print(timedate_stamp + ' day partial uptime %s%%, %d outof %d %s' % (perc, ping_day_ok, ping_day_attempts, ping_fails_str))
 		# reset day counters
 		ping_day_attempts = 0
 		ping_day_ok = 0
@@ -119,20 +120,21 @@ while True:
 		ping_hour_ok += 1
 		ping_day_ok += 1
 		ping_series_ok += 1
-		print('%s up %d' % (timestamp, ping_series_ok))
+		print('%s up %d' % (time_stamp, ping_series_ok))
 	else:
 		# 185.15.59.224 wikipedia.org
 		result = sock.connect_ex(('185.15.59.224', 80))
 		if result == 0:
 			ping_hour_ok += 1
+			ping_day_ok += 1
 			ping_series_ok += 1
-			print('%s up2 %d' % (timestamp, ping_series_ok))
+			print('%s up2 %d' % (time_stamp, ping_series_ok))
 			sleep(10)
 			continue
 		else:
 			ping_fails += 1
 			ping_series_ok = 0
-			print('%s down %d' % (timestamp, ping_fails))
+			print('%s down %d' % (timedate_stamp, ping_fails))
 			sleep(10)
 			continue
 
