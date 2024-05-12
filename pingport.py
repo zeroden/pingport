@@ -128,6 +128,8 @@ while True:
 		ping_series_ok += 1
 		print('%s up %d' % (time_stamp, ping_series_ok))
 	else:
+		# wait some time for up2 try, maybe offline just temporary bug
+		sleep(10)
 		# 185.15.59.224 wikipedia.org
 		result = sock.connect_ex(('185.15.59.224', 80))
 		if result == 0:
@@ -135,12 +137,14 @@ while True:
 			ping_day_ok += 1
 			ping_series_ok += 1
 			print('%s up2 %d' % (time_stamp, ping_series_ok))
+			# don't wait long time for next try
 			sleep(10)
 			continue
 		else:
 			ping_fails += 1
 			ping_series_ok = 0
 			print('%s down %d' % (timedate_stamp, ping_fails))
+			# don't wait long time for next try
 			sleep(10)
 			continue
 
