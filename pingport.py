@@ -67,7 +67,6 @@ def percentage(whole, part):
 
 sock = None
 timemark_prev_hour = time.time()
-timemark_prev_day = time.time()
 ping_hour_attempts = 0
 ping_day_attempts = 0
 ping_hour_ok = 0
@@ -99,10 +98,7 @@ while True:
 		ping_hour_ok = 0
 
 	# print day stat
-	day_timediff = (timemark_now - timemark_prev_day) / 3600
-	if (day_timediff >= 24):
-		# reset day marker
-		timemark_prev_day = timemark_now
+	if (hour_count != 0 and hour_count % 24 == 0):
 		perc = percentage(ping_day_attempts, ping_day_ok)
 		day_count += 1
 		partial = ''
