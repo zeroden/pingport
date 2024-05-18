@@ -3,6 +3,7 @@ import time
 import sys
 import win32api
 import keyboard
+from colorama import init, Fore, Style
 
 def DupeConsoleToFile(filepath):
 	class Logger(object):
@@ -32,7 +33,8 @@ def DupeConsoleToFile(filepath):
 logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
 DupeConsoleToFile(logfilename)
 timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
-print(time.strftime(timedate_stamp + ' pingport started'))
+init(convert=True)
+print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started') + Style.RESET_ALL)
 print('python version: "%s"' % sys.version)
 print('python path: "%s"' % sys.executable)
 print("Press F1 for a manual ping\n")
@@ -94,7 +96,7 @@ while True:
 			partial = ''
 			if ping_hour_attempts != ping_hour_ok:
 				partial = ' partial'
-			print('\n' + timedate_stamp + ' hour%d%s uptime %s%%, %d outof %d %s' % (hour_count, partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
+			print(Style.BRIGHT + Fore.YELLOW + '\n' + timedate_stamp + ' hour%d%s uptime %s%%, %d outof %d %s, series %d' + Style.RESET_ALL % (hour_count, partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str, ping_series_ok))
 		# reset hour counters
 		ping_hour_attempts = 0
 		ping_hour_ok = 0
@@ -107,7 +109,7 @@ while True:
 		partial = ''
 		if ping_day_attempts != ping_day_ok:
 			partial = ' partial'
-		print('\n' + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
+		print(Style.BRIGHT + Fore.MAGENTA + '\n' + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s, series %d' + Style.RESET_ALL % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str, ping_series_ok))
 		# reset day counters
 		ping_day_attempts = 0
 		ping_day_ok = 0
@@ -128,7 +130,7 @@ while True:
 		ping_hour_ok += 1
 		ping_day_ok += 1
 		ping_series_ok += 1
-		print('.', end='')
+		print(Style.BRIGHT + Fore.GREEN + '.' + Style.RESET_ALL, end='')
 	else:
 		# wait some time for up2 try, maybe offline just temporary bug
 		sleep(10)
@@ -138,14 +140,14 @@ while True:
 			ping_hour_ok += 1
 			ping_day_ok += 1
 			ping_series_ok += 1
-			print(',', end='')
+			print(Style.BRIGHT + Fore.GREEN + 'r' + Style.RESET_ALL, end='')
 			# don't wait long time for next try
 			sleep(10)
 			continue
 		else:
 			ping_fails += 1
 			ping_series_ok = 0
-			print('\n' + '%s down %d' % (timedate_stamp, ping_fails))
+			print(Style.BRIGHT + Fore.RED + '\n' + '%s down %d' + Style.RESET_ALL % (timedate_stamp, ping_fails))
 			# don't wait long time for next try
 			sleep(10)
 			continue
