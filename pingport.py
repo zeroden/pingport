@@ -4,6 +4,28 @@ import sys
 import win32api
 import keyboard
 from colorama import init, Fore, Style
+import ctypes
+
+def GetWinUptime(): 
+	# getting the library in which GetTickCount64() resides
+	lib = ctypes.windll.kernel32
+	 
+	# calling the function and storing the return value
+	t = lib.GetTickCount64()
+	 
+	# since the time is in milliseconds i.e. 1000 * seconds
+	# therefore truncating the value
+	t = int(str(t)[:-3])
+	 
+	# extracting hours, minutes, seconds & days from t
+	# variable (which stores total time in seconds)
+	mins, sec = divmod(t, 60)
+	hour, mins = divmod(mins, 60)
+	days, hour = divmod(hour, 24)
+	 
+	# formatting the time in readable form
+	# (format = x days, HH:MM:SS)
+	return f"{days} days, {hour:02}:{mins:02}:{sec:02}"
 
 def DupeConsoleToFile(filepath):
 	class Logger(object):
@@ -30,19 +52,6 @@ def DupeConsoleToFile(filepath):
 	# no necessary, but redirect errors too
 	sys.stderr = sys.stdout
 
-logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
-DupeConsoleToFile(logfilename)
-timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
-init(convert=True, autoreset=True)
-print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started'))
-print('python version: "%s"' % sys.version)
-print('python path: "%s"' % sys.executable)
-print("Press F1 for a manual ping\n")
-
-ping_series_ok = 0
-ping_fails = 0
-ping_fails_str = ''
-
 def sleep(i):
 	while i:
 		if ping_fails:
@@ -68,6 +77,20 @@ def percentage(whole, part):
 		perc = 0
 	return str(round(perc))
 
+logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
+DupeConsoleToFile(logfilename)
+timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
+init(convert=True, autoreset=True)
+print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started'))
+print('python version: "%s"' % sys.version)
+print('python path: "%s"' % sys.executable)
+print('windows uptime: "%s"' % GetWinUptime())
+print("Press F1 for a manual ping")
+
+ping_series_ok = 0
+ping_fails = 0
+ping_fails_str = ''
+
 sock = None
 timemark_prev_hour = time.time()
 ping_hour_attempts = 0
@@ -89,14 +112,16 @@ while True:
 		# reset hour marker
 		timemark_prev_hour = timemark_now
 		perc = percentage(ping_hour_attempts, ping_hour_ok)
+		# if computer slept for some time print how many hours
 		if (hour_timediff >= 2):
-			print('\n' + timedate_stamp + ' +%d hours' % hour_timediff)
+			print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hour_timediff)
+		# print regular hour mark
 		else:
 			hour_count += 1
 			partial = ''
 			if ping_hour_attempts != ping_hour_ok:
 				partial = ' partial'
-			print(Style.BRIGHT + Fore.YELLOW + '\n' + timedate_stamp + ' hour%d%s uptime %s%%, %d outof %d %s, series %d' % (hour_count, partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str, ping_series_ok))
+			print('\n' + timedate_stamp + ' hour%02d%s uptime %s%%, %d outof %d, series %d %s' % (hour_count, partial, perc, ping_hour_ok, ping_hour_attempts, ping_series_ok, ping_fails_str))
 		# reset hour counters
 		ping_hour_attempts = 0
 		ping_hour_ok = 0
@@ -109,7 +134,8 @@ while True:
 		partial = ''
 		if ping_day_attempts != ping_day_ok:
 			partial = ' partial'
-		print(Style.BRIGHT + Fore.MAGENTA + '\n' + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s, series %d' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str, ping_series_ok))
+		print(Style.BRIGHT + timedate_stamp + ' day%d  %s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
+		print('windows uptime: "%s"' % GetWinUptime())
 		# reset day counters
 		ping_day_attempts = 0
 		ping_day_ok = 0
@@ -140,10 +166,7 @@ while True:
 			ping_hour_ok += 1
 			ping_day_ok += 1
 			ping_series_ok += 1
-			print(Style.BRIGHT + Fore.GREEN + 'r', end='')
-			# don't wait long time for next try
-			sleep(10)
-			continue
+			print(Style.BRIGHT + Fore.RED + 'r', end='')
 		else:
 			ping_fails += 1
 			ping_series_ok = 0
@@ -152,4 +175,4 @@ while True:
 			sleep(10)
 			continue
 
-	sleep(60)
+	sleep(30)
