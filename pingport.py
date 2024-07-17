@@ -6,6 +6,8 @@ import keyboard
 from colorama import init, Fore, Style
 import ctypes
 import speedtest
+import subprocess
+import re
 
 def ТestInternetSpeed():
 	try:
@@ -72,7 +74,14 @@ def DupeConsoleToFile(filepath):
 	# no necessary, but redirect errors too
 	sys.stderr = sys.stdout
 
-def sleep(i):
+def Percentage(whole, part):
+	if whole:
+		perc = 100 * float(part) / float(whole)
+	else:
+		perc = 0
+	return str(round(perc))
+
+def CustomSleep(i):
 	while i:
 		if ping_fails:
 			ping_fails_str = ' (fails %d)' % ping_fails
@@ -90,12 +99,37 @@ def sleep(i):
 				i = 0
 				j = 0
 
-def percentage(whole, part):
-	if whole:
-		perc = 100 * float(part) / float(whole)
+def PingHost(host):
+    try:
+        output = subprocess.check_output(["ping", "-n", "1", host], stderr=subprocess.STDOUT, universal_newlines=True)
+        # Extract the time in ms using regular expressions
+        time_match = re.search(r'time[=<](\d+)', output)
+        if time_match:
+            time_ms = int(time_match.group(1))
+            return time_ms
+        else:
+            return -1  # General failure
+    except (subprocess.CalledProcessError, PermissionError, Exception):
+        return -1  # General failure
+
+sock = None
+ping_type = 1
+def CustomPing(host_to_ping):
+	global ping_type, sock
+	if ping_type == 1:
+		ping_type = 2
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		result = sock.connect_ex((host_to_ping, 80))
+		if sock:
+			sock.close()
+			sock = None
+		if result == 0:
+			return 0;
+		else:
+			return -3;
 	else:
-		perc = 0
-	return str(round(perc))
+		ping_type = 1
+		return PingHost(host_to_ping)
 
 logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
 DupeConsoleToFile(logfilename)
@@ -112,7 +146,6 @@ ping_series_ok = 0
 ping_fails = 0
 ping_fails_str = ''
 
-sock = None
 timemark_prev_hour = time.time()
 ping_hour_attempts = 0
 ping_day_attempts = 0
@@ -132,7 +165,7 @@ while True:
 	if (hour_timediff >= 1):
 		# reset hour marker
 		timemark_prev_hour = timemark_now
-		perc = percentage(ping_hour_attempts, ping_hour_ok)
+		perc = Percentage(ping_hour_attempts, ping_hour_ok)
 		# if computer slept for some time print how many hours
 		if (hour_timediff >= 2):
 			print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hour_timediff)
@@ -151,7 +184,7 @@ while True:
 	# print day stat
 	if (day_stat_reset and hour_count != 0 and hour_count % 24 == 0):
 		day_stat_reset = 0
-		perc = percentage(ping_day_attempts, ping_day_ok)
+		perc = Percentage(ping_day_attempts, ping_day_ok)
 		day_count += 1
 		partial = ''
 		if ping_day_attempts != ping_day_ok:
@@ -165,36 +198,30 @@ while True:
 	elif (hour_count != 0 and hour_count % 25 == 0):
 		day_stat_reset = 1
 
-	if sock:
-		sock.close()
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	
 	ping_hour_attempts += 1
 	ping_day_attempts += 1
 	
 	# 5.255.255.242 ya.ru
-	result = sock.connect_ex(('5.255.255.242', 80))
-	if result == 0:
+	# 185.15.59.224 wikipedia.org
+	host_to_ping = '5.255.255.242'
+	result = CustomPing(host_to_ping)
+	if result >= 0:
 		ping_hour_ok += 1
 		ping_day_ok += 1
 		ping_series_ok += 1
-		print(Style.BRIGHT + Fore.GREEN + '.', end='')
-	else:
-		# wait some time for up2 try, maybe offline just temporary bug
-		sleep(10)
-		# 185.15.59.224 wikipedia.org
-		result = sock.connect_ex(('185.15.59.224', 80))
-		if result == 0:
-			ping_hour_ok += 1
-			ping_day_ok += 1
-			ping_series_ok += 1
-			print(Style.BRIGHT + Fore.RED + 'r', end='')
+		if (result == 0):
+			print(Style.BRIGHT + Fore.GREEN + '.', end='')
 		else:
-			ping_fails += 1
-			ping_series_ok = 0
-			print(Style.BRIGHT + Fore.RED + '\n' + '%s down %d' % (timedate_stamp, ping_fails))
-			# don't wait long time for next try
-			sleep(10)
-			continue
+			print(Style.BRIGHT + Fore.GREEN + '%d' % result, end='')
+	else:
+		ping_fails += 1
+		ping_series_ok = 0
+		if (result == -3):
+			print(Style.BRIGHT + Fore.RED + '\n' + '%s conn down %d' % (timedate_stamp, ping_fails))
+		else:
+			print(Style.BRIGHT + Fore.RED + '\n' + '%s ping down %d' % (timedate_stamp, ping_fails))
+		# don't wait long time for next try
+		CustomSleep(10)
+		continue
 
-	sleep(30)
+	CustomSleep(60)
