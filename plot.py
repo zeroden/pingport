@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
@@ -38,6 +39,27 @@ def plot_graph(root, dataframe):
 
     # Add grid lines to the plot
     ax1.grid(True, which='both', linestyle=':', linewidth=0.5)  # Customize grid lines as needed
+
+    # Calculate statistics
+    max_download = dataframe["DOWNLOAD"].max()
+    min_download = dataframe["DOWNLOAD"].min()
+    avg_download = dataframe["DOWNLOAD"].mean()
+
+    max_upload = dataframe["UPLOAD"].max()
+    min_upload = dataframe["UPLOAD"].min()
+    avg_upload = dataframe["UPLOAD"].mean()
+
+    max_ping = dataframe["PING"].max()
+    min_ping = dataframe["PING"].min()
+    avg_ping = dataframe["PING"].mean()
+
+    # Display statistics
+    stats_text = f"Download - Max: {max_download:.2f} Mbps, Min: {min_download:.2f} Mbps, Avg: {avg_download:.2f} Mbps\n" \
+                 f"Upload - Max: {max_upload:.2f} Mbps, Min: {min_upload:.2f} Mbps, Avg: {avg_upload:.2f} Mbps\n" \
+                 f"Ping - Max: {max_ping:.2f} ms, Min: {min_ping:.2f} ms, Avg: {avg_ping:.2f} ms"
+
+    stats_label = ttk.Label(root, text=stats_text, wraplength=600)
+    stats_label.pack(pady=10)
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
