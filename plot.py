@@ -9,7 +9,7 @@ def maximize_window(root):
 
 def main():
     root = tk.Tk()
-    root.title("My Application")
+    root.title("plot")
     
     # Maximizing the window
     maximize_window(root)
