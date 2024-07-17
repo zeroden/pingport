@@ -5,6 +5,26 @@ import win32api
 import keyboard
 from colorama import init, Fore, Style
 import ctypes
+import speedtest
+
+def ТestInternetSpeed():
+	try:
+		st = speedtest.Speedtest()
+		print('testing internet speed... ', end='')
+		st.get_best_server()
+		ping = round(st.results.ping)
+		print(f'ping {ping}ms; ', end='')
+		down_speed = round(st.download() / 1000 / 1000, 2)
+		down_speed_byte = round(down_speed / 8, 2)
+		print(f'download {down_speed}mbit({down_speed_byte}mbyte); ', end='')
+		up_speed = round(st.upload() / 1000 / 1000, 2)
+		up_speed_byte = round(up_speed / 8, 2)
+		print(f'upload {up_speed}mbit({up_speed_byte}mbyte)')
+		timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+		with open('speed.csv', 'a') as myfile:
+			myfile.write(f'"{timedate_stamp}","{ping}","{down_speed}","{up_speed}"\n')
+	except speedtest.SpeedtestException as e:
+		print('an error occurred during the speed test:', str(e))
 
 def GetWinUptime(): 
 	# getting the library in which GetTickCount64() resides
@@ -85,6 +105,7 @@ print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport start
 print('python version: "%s"' % sys.version)
 print('python path: "%s"' % sys.executable)
 print('windows uptime: "%s"' % GetWinUptime())
+ТestInternetSpeed()
 print("Press F1 for a manual ping")
 
 ping_series_ok = 0
@@ -125,6 +146,7 @@ while True:
 		# reset hour counters
 		ping_hour_attempts = 0
 		ping_hour_ok = 0
+		ТestInternetSpeed()
 
 	# print day stat
 	if (day_stat_reset and hour_count != 0 and hour_count % 24 == 0):
