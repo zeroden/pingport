@@ -45,6 +45,9 @@ def main():
     midnight = pd.Timestamp('00:00:00')
     ax1.axvline(x=midnight, color='gray', linestyle='--')
 
+    # Add grid lines to the plot
+    ax1.grid(True, which='both', linestyle=':', linewidth=0.5)  # Customize grid lines as needed
+
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
