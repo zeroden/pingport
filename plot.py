@@ -47,6 +47,13 @@ def plot_graph(root, dataframe):
     toolbar.update()
     toolbar.pack(side=tk.TOP, fill=tk.BOTH, expand=True)  # Pack toolbar above canvas
 
+    # Ensure that the figure is properly closed when closing the window
+    def on_close():
+        plt.close(fig)
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", on_close)  # Handle window close event
+
 def on_date_select(cal_start, cal_end, root, dataframe):
     start_date = cal_start.get_date()
     end_date = cal_end.get_date()
