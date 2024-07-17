@@ -7,6 +7,12 @@ from matplotlib import dates as mdates
 def maximize_window(root):
     root.state('zoomed')  # Maximizes the window on Windows systems
 
+def plot_with_day_change_vertical_line(ax, x_data, y_data, label, color):
+    for i in range(len(x_data) - 1):
+        if x_data[i].day != x_data[i + 1].day:
+            ax.axvline(x=x_data[i + 1], color='gray', linestyle='--', linewidth=1)
+    ax.plot(x_data, y_data, marker='o', linestyle='-', color=color, label=label)
+
 def main():
     root = tk.Tk()
     root.title("My Application")
@@ -21,16 +27,17 @@ def main():
 
     fig, ax1 = plt.subplots()
 
-    # Plot download and upload speeds on primary y-axis (left) with markers
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWNLOAD"], marker='o', linestyle='-', color='b', label="Download")
-    ax1.plot(dataframe["DATETIME"], dataframe["UPLOAD"], marker='o', linestyle='-', color='g', label="Upload")
+    # Plot download and upload speeds on primary y-axis (left) with markers and day change vertical line
+    plot_with_day_change_vertical_line(ax1, dataframe["DATETIME"], dataframe["DOWNLOAD"], "Download", 'b')
+    plot_with_day_change_vertical_line(ax1, dataframe["DATETIME"], dataframe["UPLOAD"], "Upload", 'g')
+
     ax1.set_xlabel("Date Time")
     ax1.set_ylabel("Speed (Mbps)")
     ax1.legend(loc='upper left')
 
-    # Create a secondary y-axis for ping with markers
+    # Create a secondary y-axis for ping with markers and day change vertical line
     ax2 = ax1.twinx()
-    ax2.plot(dataframe["DATETIME"], dataframe["PING"], marker='o', linestyle='-', color='r', label="Ping")
+    plot_with_day_change_vertical_line(ax2, dataframe["DATETIME"], dataframe["PING"], "Ping", 'r')
     ax2.set_ylabel("Ping (ms)")
     ax2.legend(loc='upper right')
 
