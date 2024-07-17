@@ -41,6 +41,10 @@ def main():
     plt.xticks(rotation=45, ha='right')
     fig.autofmt_xdate()  # Automatically format date labels
 
+    # Adding vertical dashed line at midnight
+    midnight = pd.Timestamp('00:00:00')
+    ax1.axvline(x=midnight, color='gray', linestyle='--')
+
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
