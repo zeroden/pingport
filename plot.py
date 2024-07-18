@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
 from tkinter import ttk
-from tkcalendar import Calendar, DateEntry
+from tkcalendar import DateEntry
 from matplotlib import dates as mdates
 
 def maximize_window(root):
@@ -33,9 +33,11 @@ def plot_graph(root, dataframe):
     plt.xticks(rotation=45, ha='right')
     fig.autofmt_xdate()  # Automatically format date labels
 
-    # Adding vertical dashed line at midnight
-    midnight = pd.Timestamp('00:00:00')
-    ax1.axvline(x=midnight, color='gray', linestyle='--')
+    # Adding vertical dashed line at midnight for each unique date
+    unique_dates = pd.to_datetime(dataframe["DATETIME"].dt.date.unique())
+    for date in unique_dates:
+        midnight = pd.Timestamp(date) + pd.Timedelta('00:00:00')
+        ax1.axvline(x=midnight, color='gray', linestyle='--')
 
     # Add grid lines to the plot
     ax1.grid(True, which='both', linestyle=':', linewidth=0.5)  # Customize grid lines as needed
