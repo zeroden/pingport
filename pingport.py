@@ -8,6 +8,12 @@ import ctypes
 import speedtest
 import subprocess
 import re
+from requests import get
+import maxminddb
+
+# 5.255.255.242 ya.ru
+# 185.15.59.224 wikipedia.org
+host_to_ping = '5.255.255.242'
 
 def ТestInternetSpeed():
 	try:
@@ -112,24 +118,28 @@ def PingHost(host):
     except (subprocess.CalledProcessError, PermissionError, Exception):
         return -1  # General failure
 
-sock = None
 ping_type = 1
-def CustomPing(host_to_ping):
-	global ping_type, sock
+def CustomPing(host):
+	global ping_type
+	result = 0
 	if ping_type == 1:
 		ping_type = 2
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		result = sock.connect_ex((host_to_ping, 80))
+		result = sock.connect_ex((host, 80))
 		if sock:
 			sock.close()
-			sock = None
 		if result == 0:
 			return 0;
 		else:
 			return -3;
 	else:
 		ping_type = 1
-		return PingHost(host_to_ping)
+		result = PingHost(host)
+		# make second ping try
+		CustomSleep(2)
+		if result < 0:
+			result = PingHost(host)
+		return result
 
 logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
 DupeConsoleToFile(logfilename)
@@ -139,6 +149,17 @@ print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport start
 print('python version: "%s"' % sys.version)
 print('python path: "%s"' % sys.executable)
 print('windows uptime: "%s"' % GetWinUptime())
+print('host to ping: "%s"' % host_to_ping)
+rev_host = socket.gethostbyaddr(host_to_ping)
+print('host to ping reverse: "%s"' % rev_host[0])
+print('local ip: "%s"' % socket.gethostbyname(socket.getfqdn()))
+print('local name: "%s"' % socket.getfqdn())
+wan_ip = get('https://api.ipify.org').content.decode('utf8')
+print('wan ip: "{}"'.format(wan_ip))
+with maxminddb.open_database('dbip-asn-lite-2024-07.mmdb') as reader:
+	rec = reader.get(wan_ip)
+	print('isp: "%s"' % rec['autonomous_system_organization'])
+
 ТestInternetSpeed()
 print("Press F1 for a manual ping")
 
@@ -201,9 +222,6 @@ while True:
 	ping_hour_attempts += 1
 	ping_day_attempts += 1
 	
-	# 5.255.255.242 ya.ru
-	# 185.15.59.224 wikipedia.org
-	host_to_ping = '5.255.255.242'
 	result = CustomPing(host_to_ping)
 	if result >= 0:
 		ping_hour_ok += 1
