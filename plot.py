@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkcalendar import DateEntry
 from matplotlib import dates as mdates
+from datetime import datetime, timedelta
 
 def maximize_window(root):
     root.state('zoomed')  # Maximizes the window on Windows systems
@@ -99,6 +100,17 @@ def show_all_data(root, dataframe):
     # Recreate plot with all data
     plot_graph(root, dataframe)
 
+def show_last_n_days(root, dataframe, n):
+    end_date = dataframe["DATETIME"].max().date()
+    start_date = end_date - timedelta(days=n)
+    selected_data = dataframe[(dataframe['DATETIME'].dt.date >= start_date) & 
+                              (dataframe['DATETIME'].dt.date <= end_date)]
+    # Clear existing plot if any
+    for widget in root.winfo_children():
+        widget.destroy()
+    # Recreate plot with selected data
+    plot_graph(root, selected_data)
+
 def main():
     root = tk.Tk()
     root.title("plot")
@@ -126,6 +138,12 @@ def main():
 
     # Button to show all data
     ttk.Button(root, text="Show All Data", command=lambda: show_all_data(root, dataframe)).pack()
+
+    # Buttons to show data for the last 3 days, last week, last month, and last year
+    ttk.Button(root, text="Last 3 Days", command=lambda: show_last_n_days(root, dataframe, 3)).pack()
+    ttk.Button(root, text="Last Week", command=lambda: show_last_n_days(root, dataframe, 7)).pack()
+    ttk.Button(root, text="Last Month", command=lambda: show_last_n_days(root, dataframe, 30)).pack()
+    ttk.Button(root, text="Last Year", command=lambda: show_last_n_days(root, dataframe, 365)).pack()
 
     root.mainloop()
 
