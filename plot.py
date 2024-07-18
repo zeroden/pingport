@@ -134,16 +134,15 @@ def main():
     cal_end.pack(pady=10)
 
     # Button to select date range
-    ttk.Button(root, text="Select Date Range", command=lambda: on_date_select(cal_start, cal_end, root, dataframe)).pack()
-
-    # Button to show all data
-    ttk.Button(root, text="Show All Data", command=lambda: show_all_data(root, dataframe)).pack()
+    ttk.Button(root, text="Select Date Range", command=lambda: on_date_select(cal_start, cal_end, root, dataframe)).pack(pady=5)
 
     # Buttons to show data for the last 3 days, last week, last month, and last year
-    ttk.Button(root, text="Last 3 Days", command=lambda: show_last_n_days(root, dataframe, 3)).pack()
-    ttk.Button(root, text="Last Week", command=lambda: show_last_n_days(root, dataframe, 7)).pack()
-    ttk.Button(root, text="Last Month", command=lambda: show_last_n_days(root, dataframe, 30)).pack()
-    ttk.Button(root, text="Last Year", command=lambda: show_last_n_days(root, dataframe, 365)).pack()
+    ttk.Button(root, text="Last 3 Days", command=lambda: show_last_n_days(root, dataframe, 3)).pack(pady=5)
+    ttk.Button(root, text="Last Week", command=lambda: show_last_n_days(root, dataframe, 7)).pack(pady=5)
+    ttk.Button(root, text="Last Month", command=lambda: show_last_n_days(root, dataframe, 30)).pack(pady=5)
+    ttk.Button(root, text="Last Year", command=lambda: show_last_n_days(root, dataframe, 365)).pack(pady=5)
+    # Button to show all data
+    ttk.Button(root, text="Show All Data", command=lambda: show_all_data(root, dataframe)).pack(pady=5)
 
     root.mainloop()
 
