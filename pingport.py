@@ -21,13 +21,13 @@ def test_internet_speed():
         print('testing internet speed... ', end='')
         st.get_best_server()
         ping = round(st.results.ping)
-        print(f'ping {ping}ms; ', end='')
+        print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
         down_speed = round(st.download() / 1000 / 1000, 2)
         down_speed_byte = round(down_speed / 8, 2)
-        print(f'download {down_speed}mbit({down_speed_byte}mbyte); ', end='')
+        print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed}' + Style.RESET_ALL + f' mbit ({down_speed_byte} mbyte); ', end='')
         up_speed = round(st.upload() / 1000 / 1000, 2)
         up_speed_byte = round(up_speed / 8, 2)
-        print(f'upload {up_speed}mbit({up_speed_byte}mbyte)')
+        print(f'upload ' + Style.BRIGHT + Fore.YELLOW + f'{up_speed}' + Style.RESET_ALL + f' mbit ({up_speed_byte} mbyte)')
         timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
         with open('speed.csv', 'a') as myfile:
             myfile.write(f'"{timedate_stamp}","{ping}","{down_speed}","{up_speed}"\n')
@@ -131,7 +131,7 @@ def CustomPing(host):
     if ret_ping >= 0:
         print(Style.BRIGHT + Fore.GREEN + '%d' % ret_ping, end='')
     else:
-        print(Style.BRIGHT + Fore.RED + '\n' + '%s ping down %d' % (timedate_stamp, ping_fails))
+        print(Style.BRIGHT + Fore.RED + '\n' + '%s ping down %d' % (timedate_stamp, ping_fails + 1))
 
     # ping using connect ping
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -141,7 +141,7 @@ def CustomPing(host):
     if ret_sock == 0:
         print(Style.BRIGHT + Fore.GREEN + '.', end='');
     else:
-        print(Style.BRIGHT + Fore.RED + '\n' + '%s conn down %d' % (timedate_stamp, ping_fails))
+        print(Style.BRIGHT + Fore.RED + '\n' + '%s conn down %d' % (timedate_stamp, ping_fails + 1))
 
     # successful only if both type of pings are ok
     return ret_ping >= 0 and ret_sock == 0
@@ -243,4 +243,4 @@ while True:
         CustomSleep(10)
         continue
 
-    CustomSleep(60)
+    CustomSleep(120)
