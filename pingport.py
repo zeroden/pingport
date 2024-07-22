@@ -5,37 +5,63 @@ import win32api
 import keyboard
 from colorama import init, Fore, Style
 import ctypes
-import speedtest
 import subprocess
 import re
 from requests import get
 import maxminddb
+import random
+import requests
+import os
 
-# 5.255.255.242 ya.ru
 # 185.15.59.224 wikipedia.org
-host_to_ping = '5.255.255.242'
+# 212.183.159.230 xcal1.vodafone.co.uk
+host_to_ping = '212.183.159.230'
 
-def test_internet_speed():
-    try:
-        st = speedtest.Speedtest()
-        print('testing internet speed... ', end='')
-        st.get_best_server()
-        ping = round(st.results.ping)
-        print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
-        down_speed = round(st.download() / 1000 / 1000, 2)
-        down_speed_byte = round(down_speed / 8, 2)
-        print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed}' + Style.RESET_ALL + f' mbit ({down_speed_byte} mbyte); ', end='')
-        up_speed = round(st.upload() / 1000 / 1000, 2)
-        up_speed_byte = round(up_speed / 8, 2)
-        print(f'upload ' + Style.BRIGHT + Fore.YELLOW + f'{up_speed}' + Style.RESET_ALL + f' mbit ({up_speed_byte} mbyte)')
-        timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
-        with open('speed.csv', 'a') as myfile:
-            myfile.write(f'"{timedate_stamp}","{ping}","{down_speed}","{up_speed}"\n')
-        return True
-    except speedtest.SpeedtestException as e:
-        print('an error occurred during the speed test:', str(e))
+def test_download_speed():
+    print('testing download speed... ', end='')
+    anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
+    url = 'http://212.183.159.230/10MB.zip?x=%s' % anti_cache_stamp # 10MB test file
+    
+    ping = PingHost('212.183.159.230')
+    print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
 
-    return False
+    file_path = "test_file.zip"
+    start_time = time.time()
+    response = requests.get(url, stream=True)
+    total_length = response.headers.get('content-length')
+
+    if total_length is None:  # no content length header
+        with open(file_path, 'wb') as f:
+            f.write(response.content)
+    else:
+        dl = 0
+        total_length = int(total_length)
+        with open(file_path, 'wb') as f:
+            for data in response.iter_content(chunk_size=4096):
+                dl += len(data)
+                f.write(data)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    file_size_mb = total_length / 1_000_000  # Convert bytes to megabytes
+    down_speed_bit = round((file_size_mb * 8) / elapsed_time, 2)  # Convert MBps to Mbps
+    down_speed_byte = round(down_speed_bit / 8, 2)
+
+    # Remove the temporary file
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_bit}' + Style.RESET_ALL + f' mbit ({down_speed_byte} mbyte);')
+
+    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+    speed_file = 'speed.csv'
+    # if speed file not exist create header in it
+    if not os.path.exists(speed_file):
+        with open(speed_file, 'a') as myfile:
+            myfile.write('"DATETIME","PING","DOWNLOAD"\n')
+    with open(speed_file, 'a') as myfile:
+        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_bit}"\n')
 
 def GetWinUptime(): 
     # getting the library in which GetTickCount64() resides
@@ -165,10 +191,7 @@ with maxminddb.open_database('dbip-asn-lite-2024-07.mmdb') as reader:
     rec = reader.get(wan_ip)
     print('isp: "%s"' % rec['autonomous_system_organization'])
 
-# try 2 times
-if not test_internet_speed():
-    CustomSleep(120)
-    test_internet_speed()
+test_download_speed()
 
 print("Press F1 for a manual ping")
 
@@ -208,10 +231,7 @@ while True:
         # reset hour counters
         ping_hour_attempts = 0
         ping_hour_ok = 0
-        # try 2 times
-        if not test_internet_speed():
-            CustomSleep(120)
-            test_internet_speed()
+        test_download_speed()
 
     # print day stat
     if (day_stat_reset and hour_count != 0 and hour_count % 24 == 0):

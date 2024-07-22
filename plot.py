@@ -14,16 +14,15 @@ def maximize_window(root):
 def plot_graph(root, dataframe):
     fig, ax1 = plt.subplots()
 
-    # Plot download and upload speeds on primary y-axis (left) with markers
+    # Plot download speed on primary y-axis (left) with markers
     ax1.plot(dataframe["DATETIME"], dataframe["DOWNLOAD"], marker='o', linestyle='-', color='b', label="Download")
-    ax1.plot(dataframe["DATETIME"], dataframe["UPLOAD"], marker='o', linestyle='-', color='g', label="Upload")
     ax1.set_xlabel("Date Time")
     ax1.set_ylabel("Speed (Mbps)")
     ax1.legend(loc='upper left')
 
     # Create a secondary y-axis for ping with markers
     ax2 = ax1.twinx()
-    ax2.plot(dataframe["DATETIME"], dataframe["PING"], marker='o', linestyle='-', color='r', label="Ping")
+    ax2.plot(dataframe["DATETIME"], dataframe["PING"], marker='o', linestyle='-', color='y', label="Ping")
     ax2.set_ylabel("Ping (ms)")
     ax2.legend(loc='upper right')
 
@@ -48,17 +47,12 @@ def plot_graph(root, dataframe):
     min_download = dataframe["DOWNLOAD"].min()
     avg_download = dataframe["DOWNLOAD"].mean()
 
-    max_upload = dataframe["UPLOAD"].max()
-    min_upload = dataframe["UPLOAD"].min()
-    avg_upload = dataframe["UPLOAD"].mean()
-
     max_ping = dataframe["PING"].max()
     min_ping = dataframe["PING"].min()
     avg_ping = dataframe["PING"].mean()
 
     # Display statistics
     stats_text = f"Download - Max: {max_download:.2f} Mbps, Min: {min_download:.2f} Mbps, Avg: {avg_download:.2f} Mbps\n" \
-                 f"Upload - Max: {max_upload:.2f} Mbps, Min: {min_upload:.2f} Mbps, Avg: {avg_upload:.2f} Mbps\n" \
                  f"Ping - Max: {max_ping:.2f} ms, Min: {min_ping:.2f} ms, Avg: {avg_ping:.2f} ms"
 
     stats_label = ttk.Label(root, text=stats_text, wraplength=600)
