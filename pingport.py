@@ -15,44 +15,55 @@ import os
 
 # 185.15.59.224 wikipedia.org
 # 212.183.159.230 xcal1.vodafone.co.uk
-host_to_ping = '212.183.159.230'
+# https://www.thinkbroadband.com/download
+#host_to_ping = 'ipv4.download.thinkbroadband.com'
+host_to_ping = 'speedtest.selectel.ru'
 
 def test_download_speed():
-    print('testing download speed... ', end='')
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
-    url = 'http://212.183.159.230/10MB.zip?x=%s' % anti_cache_stamp # 10MB test file
-    
-    ping = PingHost('212.183.159.230')
-    print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
+    #url = 'http://212.183.159.230/5MB.zip?x=%s' % anti_cache_stamp # 10MB test file
+    #url = 'http://ipv4.download.thinkbroadband.com/10MB.zip?x=%s' % anti_cache_stamp # 10MB test file
+    #url = 'https://test2.fibertelecom.it/10MB.zip?x=%s' % anti_cache_stamp # 10MB test file
+    url = 'https://speedtest.selectel.ru/10MB?x=%s' % anti_cache_stamp # 10MB test file
 
-    file_path = "test_file.zip"
     start_time = time.time()
     response = requests.get(url, stream=True)
     total_length = response.headers.get('content-length')
 
-    if total_length is None:  # no content length header
-        with open(file_path, 'wb') as f:
-            f.write(response.content)
+    if total_length is None:
+        data = response.content
     else:
         dl = 0
+        data = bytearray()
         total_length = int(total_length)
-        with open(file_path, 'wb') as f:
-            for data in response.iter_content(chunk_size=4096):
-                dl += len(data)
-                f.write(data)
+        for chunk in response.iter_content(chunk_size=4096):
+            dl += len(chunk)
+            data.extend(chunk)
 
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    file_size_mb = total_length / 1_000_000  # Convert bytes to megabytes
-    down_speed_bit = round((file_size_mb * 8) / elapsed_time, 2)  # Convert MBps to Mbps
-    down_speed_byte = round(down_speed_bit / 8, 2)
+    down_speed_byte = round(len(data) / elapsed_time, 2)  # Calculate speed based on the data length
 
-    # Remove the temporary file
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    return down_speed_byte
 
-    print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_bit}' + Style.RESET_ALL + f' mbit ({down_speed_byte} mbyte);')
+def get_download_speed():
+    print('testing download speed... ', end='')
+    
+    ping = PingHost(host_to_ping)
+    print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
+
+    speed1 = test_download_speed()
+    speed2 = test_download_speed()
+    speed3 = test_download_speed()
+    
+    down_speed_mbyte = max([speed1, speed2, speed3])
+    down_speed_mbit = down_speed_mbyte * 8
+    # convert to mega
+    down_speed_mbyte = round(down_speed_mbyte / 1_000_000, 2)
+    down_speed_mbit = round(down_speed_mbit / 1_000_000, 2)
+    
+    print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_mbit}' + Style.RESET_ALL + f' mbit ({down_speed_mbyte} mbyte);')
 
     timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
     speed_file = 'speed.csv'
@@ -61,7 +72,7 @@ def test_download_speed():
         with open(speed_file, 'a') as myfile:
             myfile.write('"DATETIME","PING","DOWNLOAD"\n')
     with open(speed_file, 'a') as myfile:
-        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_bit}"\n')
+        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_mbit}"\n')
 
 def GetWinUptime(): 
     # getting the library in which GetTickCount64() resides
@@ -116,7 +127,7 @@ def Percentage(whole, part):
         perc = 0
     return str(round(perc))
 
-def CustomSleep(i):
+def custom_sleep(i):
     while i:
         if ping_fails:
             ping_fails_str = ' (fails %d)' % ping_fails
@@ -147,12 +158,14 @@ def PingHost(host):
     except (subprocess.CalledProcessError, PermissionError, Exception):
         return -1  # General failure
 
+ping_fails = 0
+ping_fails_str = ''
 def CustomPing(host):
     # ping using classical ping
     ret_ping = PingHost(host)
     # make second ping try
     if ret_ping < 0:
-        CustomSleep(5)
+        custom_sleep(5)
         ret_ping = PingHost(host)
     if ret_ping >= 0:
         print(Style.BRIGHT + Fore.GREEN + '%d' % ret_ping, end='')
@@ -172,6 +185,13 @@ def CustomPing(host):
     # successful only if both type of pings are ok
     return ret_ping >= 0 and ret_sock == 0
 
+def reverse_ip(ip):
+    try:
+        host_rev = socket.gethostbyaddr(ip)[0]
+    except (socket.herror) as err:
+        host_rev = err
+    return host_rev
+
 logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
 DupeConsoleToFile(logfilename)
 timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
@@ -181,22 +201,21 @@ print('python version: "%s"' % sys.version)
 print('python path: "%s"' % sys.executable)
 print('windows uptime: "%s"' % GetWinUptime())
 print('host to ping: "%s"' % host_to_ping)
-rev_host = socket.gethostbyaddr(host_to_ping)
-print('host to ping reverse: "%s"' % rev_host[0])
+host_to_ping_ip = socket.gethostbyname(host_to_ping)
+print('host to ping ip: "%s"' % host_to_ping_ip)
+print('host to ping reverse: "%s"' % reverse_ip(host_to_ping_ip))
 print('local ip: "%s"' % socket.gethostbyname(socket.getfqdn()))
 print('local name: "%s"' % socket.getfqdn())
 wan_ip = get('https://api.ipify.org').content.decode('utf8')
 print('wan ip: "{}"'.format(wan_ip))
+print('wan ip reverse: "{}"'.format(reverse_ip(wan_ip)))
 with maxminddb.open_database('dbip-asn-lite-2024-07.mmdb') as reader:
     rec = reader.get(wan_ip)
     print('isp: "%s"' % rec['autonomous_system_organization'])
 
-test_download_speed()
+get_download_speed()
 
 print("Press F1 for a manual ping")
-
-ping_fails = 0
-ping_fails_str = ''
 
 timemark_prev_hour = time.time()
 ping_hour_attempts = 0
@@ -231,7 +250,7 @@ while True:
         # reset hour counters
         ping_hour_attempts = 0
         ping_hour_ok = 0
-        test_download_speed()
+        get_download_speed()
 
     # print day stat
     if (day_stat_reset and hour_count != 0 and hour_count % 24 == 0):
@@ -260,7 +279,7 @@ while True:
     else:
         ping_fails += 1
         # don't wait long time for next try
-        CustomSleep(10)
+        custom_sleep(10)
         continue
 
-    CustomSleep(120)
+    custom_sleep(120)
