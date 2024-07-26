@@ -45,6 +45,9 @@ def test_download_speed():
 
     down_speed_byte = round(len(data) / elapsed_time, 2)  # Calculate speed based on the data length
 
+    # Explicitly discard the accumulated data
+    del data
+
     return down_speed_byte
 
 def get_download_speed():
