@@ -14,17 +14,11 @@ import requests
 import os
 
 # 185.15.59.224 wikipedia.org
-# 212.183.159.230 xcal1.vodafone.co.uk
-# https://www.thinkbroadband.com/download
-#host_to_ping = 'ipv4.download.thinkbroadband.com'
 host_to_ping = 'speedtest.selectel.ru'
 
-def test_download_speed():
+def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
-    #url = 'http://212.183.159.230/5MB.zip?x=%s' % anti_cache_stamp # 10MB test file
-    #url = 'http://ipv4.download.thinkbroadband.com/10MB.zip?x=%s' % anti_cache_stamp # 10MB test file
-    #url = 'https://test2.fibertelecom.it/10MB.zip?x=%s' % anti_cache_stamp # 10MB test file
-    url = 'https://speedtest.selectel.ru/10MB?x=%s' % anti_cache_stamp # 10MB test file
+    url = url + '?x=%s' % anti_cache_stamp
 
     start_time = time.time()
     response = requests.get(url, stream=True)
@@ -51,24 +45,28 @@ def test_download_speed():
     return down_speed_byte
 
 def get_download_speed():
-    print('testing download speed... ', end='')
+    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')    
+    print(f'[{timedate_stamp}] testing download speed... ', end='')
     
     ping = PingHost(host_to_ping)
     print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
 
-    speed1 = test_download_speed()
-    speed2 = test_download_speed()
-    speed3 = test_download_speed()
+    speed1 = test_download_speed('https://speedtest.selectel.ru/10MB')
+    speed2 = test_download_speed('http://ipv4.download.thinkbroadband.com/5MB.zip')
+    speed3 = test_download_speed('http://212.183.159.230/5MB.zip')
     
+    # resulting speed is max of three
     down_speed_mbyte = max([speed1, speed2, speed3])
     down_speed_mbit = down_speed_mbyte * 8
     # convert to mega
-    down_speed_mbyte = round(down_speed_mbyte / 1_000_000, 2)
-    down_speed_mbit = round(down_speed_mbit / 1_000_000, 2)
-    
-    print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_mbit}' + Style.RESET_ALL + f' mbit ({down_speed_mbyte} mbyte);')
+    down_speed_mbyte = round(down_speed_mbyte / 1_000_000, 1)
+    down_speed_mbit = round(down_speed_mbit / 1_000_000, 1)
+    speed1 = round(speed1 * 8 / 1_000_000)
+    speed2 = round(speed2 * 8 / 1_000_000)
+    speed3 = round(speed3 * 8 / 1_000_000)
 
-    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+    print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_mbit}' + Style.RESET_ALL + f' mbit ({down_speed_mbyte} mbyte, {speed1}/{speed2}/{speed3});')
+
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
     if not os.path.exists(speed_file):
@@ -207,7 +205,9 @@ print('host to ping: "%s"' % host_to_ping)
 host_to_ping_ip = socket.gethostbyname(host_to_ping)
 print('host to ping ip: "%s"' % host_to_ping_ip)
 print('host to ping reverse: "%s"' % reverse_ip(host_to_ping_ip))
-print('local ip: "%s"' % socket.gethostbyname(socket.getfqdn()))
+loc_ip = socket.gethostbyname(socket.getfqdn())
+print('local ip: "%s"' % loc_ip)
+print('local ip reverse: "{}"'.format(reverse_ip(loc_ip)))
 print('local name: "%s"' % socket.getfqdn())
 wan_ip = get('https://api.ipify.org').content.decode('utf8')
 print('wan ip: "{}"'.format(wan_ip))
