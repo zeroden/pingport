@@ -54,9 +54,12 @@ def get_download_speed():
     speed1 = test_download_speed('https://speedtest.selectel.ru/10MB')
     speed2 = test_download_speed('http://ipv4.download.thinkbroadband.com/5MB.zip')
     speed3 = test_download_speed('http://212.183.159.230/5MB.zip')
+    speed4 = test_download_speed('http://speedtest.tele2.net/1MB.zip')
+    speed5 = test_download_speed('https://speedtest.rastrnet.ru/1MB.zip')
+    speed6 = test_download_speed('https://proof.ovh.net/files/1Mb.dat')
     
-    # resulting speed is max of three
-    down_speed_mbyte = max([speed1, speed2, speed3])
+    # resulting speed is best of 6
+    down_speed_mbyte = max([speed1, speed2, speed3, speed4, speed5, speed6])
     down_speed_mbit = down_speed_mbyte * 8
     # convert to mega
     down_speed_mbyte = round(down_speed_mbyte / 1_000_000, 1)
@@ -64,8 +67,11 @@ def get_download_speed():
     speed1 = round(speed1 * 8 / 1_000_000)
     speed2 = round(speed2 * 8 / 1_000_000)
     speed3 = round(speed3 * 8 / 1_000_000)
+    speed4 = round(speed4 * 8 / 1_000_000)
+    speed5 = round(speed5 * 8 / 1_000_000)
+    speed6 = round(speed6 * 8 / 1_000_000)
 
-    print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_mbit}' + Style.RESET_ALL + f' mbit ({down_speed_mbyte} mbyte, {speed1}/{speed2}/{speed3});')
+    print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_mbit}' + Style.RESET_ALL + f' mbit ({down_speed_mbyte} mbyte, {speed1}/{speed2}/{speed3}/{speed4}/{speed5}/{speed6});')
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
