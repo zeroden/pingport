@@ -15,16 +15,20 @@ def plot_graph(root, dataframe):
     fig, ax1 = plt.subplots()
 
     # Plot download speed on primary y-axis (left) with markers
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWNLOAD"], marker='o', linestyle='-', color='b', label="Download")
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN1"], marker='o', linestyle='-', color='b', label="Download1")
     ax1.set_xlabel("Date Time")
     ax1.set_ylabel("Speed (Mbps)")
     ax1.legend(loc='upper left')
 
+    # Create a secondary y-axis for download2 with markers
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN2"], marker='o', linestyle='-', color='g', label="Download2")
+    ax1.legend(loc='upper left')
+
     # Create a secondary y-axis for ping with markers
-    ax2 = ax1.twinx()
-    ax2.plot(dataframe["DATETIME"], dataframe["PING"], marker='o', linestyle='-', color='y', label="Ping")
-    ax2.set_ylabel("Ping (ms)")
-    ax2.legend(loc='upper right')
+    ax3 = ax1.twinx()
+    ax3.plot(dataframe["DATETIME"], dataframe["PING"], marker='o', linestyle=':', color='y', label="Ping")
+    ax3.set_ylabel("Ping (ms)")
+    ax3.legend(loc='upper right')
 
     # Format x-axis dates
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M:%S'))  # Example format
@@ -43,16 +47,21 @@ def plot_graph(root, dataframe):
     ax1.grid(True, which='both', linestyle=':', linewidth=0.5)  # Customize grid lines as needed
 
     # Calculate statistics
-    max_download = dataframe["DOWNLOAD"].max()
-    min_download = dataframe["DOWNLOAD"].min()
-    avg_download = dataframe["DOWNLOAD"].mean()
+    max_download_1 = dataframe["DOWN1"].max()
+    min_download_1 = dataframe["DOWN1"].min()
+    avg_download_1 = dataframe["DOWN1"].mean()
+
+    max_download_2 = dataframe["DOWN2"].max()
+    min_download_2 = dataframe["DOWN2"].min()
+    avg_download_2 = dataframe["DOWN2"].mean()
 
     max_ping = dataframe["PING"].max()
     min_ping = dataframe["PING"].min()
     avg_ping = dataframe["PING"].mean()
 
     # Display statistics
-    stats_text = f"Download - Max: {max_download:.2f} Mbps, Min: {min_download:.2f} Mbps, Avg: {avg_download:.2f} Mbps\n" \
+    stats_text = f"Download1 - Max: {max_download_1:.2f} Mbps, Min: {min_download_1:.2f} Mbps, Avg: {avg_download_1:.2f} Mbps\n" \
+                 f"Download2 - Max: {max_download_2:.2f} Mbps, Min: {min_download_2:.2f} Mbps, Avg: {avg_download_2:.2f} Mbps\n" \
                  f"Ping - Max: {max_ping:.2f} ms, Min: {min_ping:.2f} ms, Avg: {avg_ping:.2f} ms"
 
     stats_label = ttk.Label(root, text=stats_text, wraplength=600)

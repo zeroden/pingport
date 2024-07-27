@@ -13,9 +13,6 @@ import random
 import requests
 import os
 
-# 185.15.59.224 wikipedia.org
-host_to_ping = 'speedtest.selectel.ru'
-
 def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
     url = url + '?x=%s' % anti_cache_stamp
@@ -42,44 +39,35 @@ def test_download_speed(url):
     # Explicitly discard the accumulated data
     del data
 
-    return down_speed_byte
+    return down_speed_byte * 8
 
 def get_download_speed():
     timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')    
     print(f'[{timedate_stamp}] testing download speed... ', end='')
     
-    ping = PingHost(host_to_ping)
+    ping = PingHost(sys.argv[1])
     print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
 
-    speed1 = test_download_speed('https://speedtest.selectel.ru/10MB')
-    speed2 = test_download_speed('http://ipv4.download.thinkbroadband.com/5MB.zip')
-    speed3 = test_download_speed('http://212.183.159.230/5MB.zip')
-    speed4 = test_download_speed('http://speedtest.tele2.net/1MB.zip')
-    speed5 = test_download_speed('https://speedtest.rastrnet.ru/1MB.zip')
-    speed6 = test_download_speed('https://proof.ovh.net/files/1Mb.dat')
-    
-    # resulting speed is best of 6
-    down_speed_mbyte = max([speed1, speed2, speed3, speed4, speed5, speed6])
-    down_speed_mbit = down_speed_mbyte * 8
-    # convert to mega
-    down_speed_mbyte = round(down_speed_mbyte / 1_000_000, 1)
-    down_speed_mbit = round(down_speed_mbit / 1_000_000, 1)
-    speed1 = round(speed1 * 8 / 1_000_000)
-    speed2 = round(speed2 * 8 / 1_000_000)
-    speed3 = round(speed3 * 8 / 1_000_000)
-    speed4 = round(speed4 * 8 / 1_000_000)
-    speed5 = round(speed5 * 8 / 1_000_000)
-    speed6 = round(speed6 * 8 / 1_000_000)
+    url1, url2, url3, url4 = sys.argv[2:]
 
-    print('download ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_mbit}' + Style.RESET_ALL + f' mbit ({down_speed_mbyte} mbyte, {speed1}/{speed2}/{speed3}/{speed4}/{speed5}/{speed6});')
+    speed1 = test_download_speed(url1)
+    speed2 = test_download_speed(url2)
+    speed3 = test_download_speed(url3)
+    speed4 = test_download_speed(url4)
+    
+    # resulting speed is best of two
+    down_speed_1_mbit = round(max([speed1, speed2]) / 1_000_000, 1)
+    down_speed_2_mbit = round(max([speed3, speed4]) / 1_000_000, 1)
+
+    print('down1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_mbit}' + Style.RESET_ALL + f' mbit; down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit')
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
     if not os.path.exists(speed_file):
         with open(speed_file, 'a') as myfile:
-            myfile.write('"DATETIME","PING","DOWNLOAD"\n')
+            myfile.write('"DATETIME","PING","DOWN1","DOWN2"\n')
     with open(speed_file, 'a') as myfile:
-        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_mbit}"\n')
+        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1_mbit}","{down_speed_2_mbit}"\n')
 
 def GetWinUptime(): 
     # getting the library in which GetTickCount64() resides
@@ -199,96 +187,110 @@ def reverse_ip(ip):
         host_rev = err
     return host_rev
 
-logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
-DupeConsoleToFile(logfilename)
-timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
-init(convert=True, autoreset=True)
-print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started'))
-print('python version: "%s"' % sys.version)
-print('python path: "%s"' % sys.executable)
-print('windows uptime: "%s"' % GetWinUptime())
-print('host to ping: "%s"' % host_to_ping)
-host_to_ping_ip = socket.gethostbyname(host_to_ping)
-print('host to ping ip: "%s"' % host_to_ping_ip)
-print('host to ping reverse: "%s"' % reverse_ip(host_to_ping_ip))
-loc_ip = socket.gethostbyname(socket.getfqdn())
-print('local ip: "%s"' % loc_ip)
-print('local ip reverse: "{}"'.format(reverse_ip(loc_ip)))
-print('local name: "%s"' % socket.getfqdn())
-wan_ip = get('https://api.ipify.org').content.decode('utf8')
-print('wan ip: "{}"'.format(wan_ip))
-print('wan ip reverse: "{}"'.format(reverse_ip(wan_ip)))
-with maxminddb.open_database('dbip-asn-lite-2024-07.mmdb') as reader:
-    rec = reader.get(wan_ip)
-    print('isp: "%s"' % rec['autonomous_system_organization'])
-
-get_download_speed()
-
-print("Press F1 for a manual ping")
-
-timemark_prev_hour = time.time()
-ping_hour_attempts = 0
-ping_day_attempts = 0
-ping_hour_ok = 0
-ping_day_ok = 0
-hour_count = 0
-day_count = 0
-day_stat_reset = 1
-
-while True:
-    time_stamp = time.strftime('%H:%M:%S')
+def main():
+    logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
+    DupeConsoleToFile(logfilename)
     timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
-    timemark_now = time.time()
+    init(convert=True, autoreset=True)
 
-    # print hour stat
-    hour_timediff = (timemark_now - timemark_prev_hour) / 3600
-    if (hour_timediff >= 1):
-        # reset hour marker
-        timemark_prev_hour = timemark_now
-        perc = Percentage(ping_hour_attempts, ping_hour_ok)
-        # if computer slept for some time print how many hours
-        if (hour_timediff >= 2):
-            print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hour_timediff)
-        # print regular hour mark
-        else:
-            hour_count += 1
+    # Check if exactly 5 arguments (plus the script name) are passed
+    if len(sys.argv) != 6:
+        print("Error: Please provide exactly 1 host and 4 URLs.")
+        print("Usage: python pingport.py <host> <url1> <url2> <url3> <url4>")
+        sys.exit(1)
+    host_to_ping = sys.argv[1]
+
+    print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started'))
+    print('python version: "%s"' % sys.version)
+    print('python path: "%s"' % sys.executable)
+    print('windows uptime: "%s"' % GetWinUptime())
+    print('host to ping: "%s"' % host_to_ping)
+    host_to_ping_ip = socket.gethostbyname(host_to_ping)
+    print('host to ping ip: "%s"' % host_to_ping_ip)
+    print('host to ping reverse: "%s"' % reverse_ip(host_to_ping_ip))
+    loc_ip = socket.gethostbyname(socket.getfqdn())
+    print('local ip: "%s"' % loc_ip)
+    print('local ip reverse: "{}"'.format(reverse_ip(loc_ip)))
+    print('local name: "%s"' % socket.getfqdn())
+    wan_ip = get('https://api.ipify.org').content.decode('utf8')
+    print('wan ip: "{}"'.format(wan_ip))
+    print('wan ip reverse: "{}"'.format(reverse_ip(wan_ip)))
+    ip2isp_fn = 'dbip-asn-lite-2024-07.mmdb'
+    if os.path.exists(ip2isp_fn):
+        with maxminddb.open_database(ip2isp_fn) as reader:
+            rec = reader.get(wan_ip)
+            print('isp: "%s"' % rec['autonomous_system_organization'])
+
+    get_download_speed()
+
+    print("Press F1 for a manual ping")
+
+    timemark_prev_hour = time.time()
+    ping_hour_attempts = 0
+    ping_day_attempts = 0
+    ping_hour_ok = 0
+    ping_day_ok = 0
+    hour_count = 0
+    day_count = 0
+    day_stat_reset = 1
+
+    while True:
+        time_stamp = time.strftime('%H:%M:%S')
+        timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
+        timemark_now = time.time()
+
+        # print hour stat
+        hour_timediff = (timemark_now - timemark_prev_hour) / 3600
+        if (hour_timediff >= 1):
+            # reset hour marker
+            timemark_prev_hour = timemark_now
+            perc = Percentage(ping_hour_attempts, ping_hour_ok)
+            # if computer slept for some time print how many hours
+            if (hour_timediff >= 2):
+                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hour_timediff)
+            # print regular hour mark
+            else:
+                hour_count += 1
+                partial = ''
+                if ping_hour_attempts != ping_hour_ok:
+                    partial = ' partial'
+                print('\n' + timedate_stamp + ' hour%02d%s uptime %s%%, %d outof %d %s' % (hour_count, partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
+            # reset hour counters
+            ping_hour_attempts = 0
+            ping_hour_ok = 0
+            get_download_speed()
+
+        # print day stat
+        if (day_stat_reset and hour_count != 0 and hour_count % 24 == 0):
+            day_stat_reset = 0
+            perc = Percentage(ping_day_attempts, ping_day_ok)
+            day_count += 1
             partial = ''
-            if ping_hour_attempts != ping_hour_ok:
+            if ping_day_attempts != ping_day_ok:
                 partial = ' partial'
-            print('\n' + timedate_stamp + ' hour%02d%s uptime %s%%, %d outof %d %s' % (hour_count, partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
-        # reset hour counters
-        ping_hour_attempts = 0
-        ping_hour_ok = 0
-        get_download_speed()
+            print(Style.BRIGHT + timedate_stamp + ' day%d  %s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
+            print('windows uptime: "%s"' % GetWinUptime())
+            # reset day counters
+            ping_day_attempts = 0
+            ping_day_ok = 0
+        # reset day stat status to avoid stat dupes
+        elif (hour_count != 0 and hour_count % 25 == 0):
+            day_stat_reset = 1
 
-    # print day stat
-    if (day_stat_reset and hour_count != 0 and hour_count % 24 == 0):
-        day_stat_reset = 0
-        perc = Percentage(ping_day_attempts, ping_day_ok)
-        day_count += 1
-        partial = ''
-        if ping_day_attempts != ping_day_ok:
-            partial = ' partial'
-        print(Style.BRIGHT + timedate_stamp + ' day%d  %s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
-        print('windows uptime: "%s"' % GetWinUptime())
-        # reset day counters
-        ping_day_attempts = 0
-        ping_day_ok = 0
-    # reset day stat status to avoid stat dupes
-    elif (hour_count != 0 and hour_count % 25 == 0):
-        day_stat_reset = 1
+        ping_hour_attempts += 1
+        ping_day_attempts += 1
 
-    ping_hour_attempts += 1
-    ping_day_attempts += 1
+        result = CustomPing(host_to_ping)
+        if result:
+            ping_hour_ok += 1
+            ping_day_ok += 1
+        else:
+            ping_fails += 1
+            # don't wait long time for next try
+            custom_sleep(10)
+            continue
 
-    result = CustomPing(host_to_ping)
-    if result:
-        ping_hour_ok += 1
-        ping_day_ok += 1
-    else:
-        ping_fails += 1
-        # don't wait long time for next try
-        custom_sleep(10)
-        continue
+        custom_sleep(120)
 
-    custom_sleep(120)
+if __name__ == "__main__":
+    main()
