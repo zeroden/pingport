@@ -26,7 +26,12 @@ def plot_graph(root, dataframe):
     ax2.legend(loc='upper left')
 
     # Create a secondary y-axis for download2 with markers
-    ax2.plot(dataframe["DATETIME"], dataframe["DOWN2"], marker='o', linestyle='-', color='g', label="Download2")
+    ax2.plot(dataframe["DATETIME"], dataframe["DOWN2"], marker='o', linestyle='-', color='r', label="Download2")
+    ax2.set_ylabel('Speed (Mbps)')
+    ax2.legend(loc='upper left')
+
+    # Create a tertiary y-axis for download3 with markers
+    ax2.plot(dataframe["DATETIME"], dataframe["DOWN3"], marker='o', linestyle='-', color='g', label="Download3")
     ax2.set_ylabel('Speed (Mbps)')
     ax2.legend(loc='upper left')
 
@@ -55,13 +60,18 @@ def plot_graph(root, dataframe):
     min_download_2 = dataframe["DOWN2"].min()
     avg_download_2 = dataframe["DOWN2"].mean()
 
+    max_download_3 = dataframe["DOWN3"].max()
+    min_download_3 = dataframe["DOWN3"].min()
+    avg_download_3 = dataframe["DOWN3"].mean()
+
     max_ping = dataframe["PING"].max()
     min_ping = dataframe["PING"].min()
     avg_ping = dataframe["PING"].mean()
 
     # Display statistics
-    stats_text = f"Download1 - Max: {max_download_1:.2f} Mbps, Min: {min_download_1:.2f} Mbps, Avg: {avg_download_1:.2f} Mbps\n" \
-                 f"Download2 - Max: {max_download_2:.2f} Mbps, Min: {min_download_2:.2f} Mbps, Avg: {avg_download_2:.2f} Mbps\n" \
+    stats_text = f"Download1 ex - Max: {max_download_1:.2f} Mbps, Min: {min_download_1:.2f} Mbps, Avg: {avg_download_1:.2f} Mbps\n" \
+                 f"Download2 yt - Max: {max_download_2:.2f} Mbps, Min: {min_download_2:.2f} Mbps, Avg: {avg_download_2:.2f} Mbps\n" \
+                 f"Download3 in - Max: {max_download_3:.2f} Mbps, Min: {min_download_3:.2f} Mbps, Avg: {avg_download_3:.2f} Mbps\n" \
                  f"Ping - Max: {max_ping:.2f} ms, Min: {min_ping:.2f} ms, Avg: {avg_ping:.2f} ms"
 
     stats_label = ttk.Label(root, text=stats_text, wraplength=600)
