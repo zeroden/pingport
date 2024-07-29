@@ -120,7 +120,7 @@ def dupe_console_to_file(filepath):
     # no necessary, but redirect errors too
     sys.stderr = sys.stdout
 
-def Percentage(whole, part):
+def get_percentage(whole, part):
     if whole:
         perc = 100 * float(part) / float(whole)
     else:
@@ -257,7 +257,7 @@ def main():
         if current_time - last_24hours >= 24 * 60 * 60:
             # reset day marker
             last_24hours = current_time
-            perc = Percentage(ping_day_attempts, ping_day_ok)
+            perc = get_percentage(ping_day_attempts, ping_day_ok)
             day_count += 1
             partial = ''
             if ping_day_attempts != ping_day_ok:
