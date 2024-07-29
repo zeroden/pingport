@@ -74,7 +74,7 @@ def get_download_speed():
     with open(speed_file, 'a') as myfile:
         myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1_mbit}","{down_speed_2_mbit}"\n')
 
-def GetWinUptime(): 
+def get_win_uptime(): 
     # getting the library in which GetTickCount64() resides
     lib = ctypes.windll.kernel32
      
@@ -208,7 +208,7 @@ def main():
     print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started'))
     print('python version: "%s"' % sys.version)
     print('python path: "%s"' % sys.executable)
-    print('windows uptime: "%s"' % GetWinUptime())
+    print('windows uptime: "%s"' % get_win_uptime())
     print('host to ping: "%s"' % host_to_ping)
     host_to_ping_ip = socket.gethostbyname(host_to_ping)
     print('host to ping ip: "%s"' % host_to_ping_ip)
@@ -263,7 +263,7 @@ def main():
             if ping_day_attempts != ping_day_ok:
                 partial = ' partial'
             print(Style.BRIGHT + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
-            print('windows uptime: "%s"' % GetWinUptime())
+            print('windows uptime: "%s"' % get_win_uptime())
             # empty string between days
             print('')
             # reset day counters
