@@ -160,7 +160,7 @@ def PingHost(host):
 
 ping_fails = 0
 ping_fails_str = ''
-def CustomPing(host):
+def custom_ping(host):
     # ping using classical ping
     ret_ping = PingHost(host)
     # make second ping try
@@ -272,7 +272,7 @@ def main():
 
         ping_day_attempts += 1
 
-        result = CustomPing(host_to_ping)
+        result = custom_ping(host_to_ping)
         if result:
             ping_day_ok += 1
         else:
