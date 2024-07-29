@@ -14,6 +14,9 @@ import requests
 import os
 import yt_dlp as youtube_dl
 
+def set_console_title(s):
+    win32api.SetConsoleTitle('pingport: ' + s)
+
 def test_youtube_speed(video_url, resolution='360p'):
     ydl_opts = {
         'format': f'bestvideo[height<={resolution}]',
@@ -91,9 +94,12 @@ def test_download_speed(url):
 
     return down_speed_byte * 8
 
-def show_download_speed():
+def show_download_speed(show_timestamp = True):
     timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
-    print(f'[{timedate_stamp}] testing download speed... ', end='')
+    if show_timestamp:
+        print(f'[{timedate_stamp}] testing download speed... ', end='')
+    else:
+        print('testing download speed... ', end='')
     
     ping = ping_host(sys.argv[1])
     if ping < 0:
@@ -107,15 +113,14 @@ def show_download_speed():
 
     url1, url2, url3, url4 = sys.argv[2:]
 
+    set_console_title('testing speed1')
     spd1 = test_download_speed(url1)
-    win32api.SetConsoleTitle('speed1 %d' % round(spd1 / 1_000_000))
+    set_console_title('speed1 is %d' % round(spd1 / 1_000_000))
     spd2 = test_download_speed(url2)
-    win32api.SetConsoleTitle('speed2 %d' % round(spd2 / 1_000_000))
     # resulting speed is best of two
     down_speed_1_mbit = round(max([spd1, spd2]) / 1_000_000, 1)
     print('down1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
 
-    win32api.SetConsoleTitle('yt test')
     # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)', 'resolution': '360', 'file_size_MB': 6.625667, 'download_time_sec': 5.190907955169678, 'speed_Mbps': 10.211187803322817}
     video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
     result = test_youtube_speed(video_url, '360')
@@ -123,9 +128,8 @@ def show_download_speed():
     print('down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
 
     spd3 = test_download_speed(url3)
-    win32api.SetConsoleTitle('speed3 %d' % round(spd3 / 1_000_000))
+    set_console_title('speed3 is %d' % round(spd3 / 1_000_000))
     spd4 = test_download_speed(url4)
-    win32api.SetConsoleTitle('speed4 %d' % round(spd4 / 1_000_000))
     # resulting speed is best of two
     down_speed_3_mbit = round(max([spd3, spd4]) / 1_000_000, 1)
     print('down3 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_mbit}' + Style.RESET_ALL + f' mbit')
@@ -195,9 +199,9 @@ def custom_sleep(i):
     while i:
         if ping_fails:
             ping_fails_str = ' (fails %d)' % ping_fails
-            win32api.SetConsoleTitle('pingport %d%s' % (i, ping_fails_str))
+            set_console_title('%d%s' % (i, ping_fails_str))
         else:
-            win32api.SetConsoleTitle('pingport %d' % i)
+            set_console_title('%d' % i)
         i = i - 1
         j = 10
         while j:
@@ -291,9 +295,7 @@ def main():
         with maxminddb.open_database(ip2isp_fn) as reader:
             rec = reader.get(wan_ip)
             print('isp: "%s"' % rec['autonomous_system_organization'])
-
-    show_download_speed()
-
+    show_download_speed(show_timestamp = False)
     print('Press F1 for a manual ping\n')
 
     last_30min = time.time()
