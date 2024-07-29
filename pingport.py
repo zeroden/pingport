@@ -200,7 +200,7 @@ def reverse_ip(ip):
     return host_rev
 
 def main():
-    logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
+    logfilename = time.strftime('pingport_%Y%m%d_%H%M%S.log')
     dupe_console_to_file(logfilename)
     timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
     init(convert=True, autoreset=True)
@@ -215,6 +215,7 @@ def main():
     print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started'))
     print('python version: "%s"' % sys.version)
     print('python path: "%s"' % sys.executable)
+    print('log: "%s"' % logfilename)
     print('windows uptime: "%s"' % get_win_uptime())
     print('host to ping: "%s"' % host_to_ping)
     host_to_ping_ip = socket.gethostbyname(host_to_ping)
@@ -252,7 +253,7 @@ def main():
         # print half-hour stat
         if current_time - last_30min >= 30 * 60:
             # if computer slept for some time print how many hours
-            hours_slept = (current_time - last_30min) / 30 * 60 * 2
+            hours_slept = (current_time - last_30min) / (30 * 60 * 2)
             if (hours_slept >= 1):
                 print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hours_slept, end='')
             # reset half-hour marker
