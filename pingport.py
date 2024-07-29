@@ -12,6 +12,56 @@ import maxminddb
 import random
 import requests
 import os
+import yt_dlp as youtube_dl
+
+def test_youtube_speed(video_url, resolution='360p'):
+    ydl_opts = {
+        'format': f'bestvideo[height<={resolution}]',
+        'noplaylist': True,
+        'outtmpl': 'temp_video.%(ext)s',
+        'quiet': True,
+        'no_warnings': True,
+    }
+    
+    org_stdout = sys.stdout
+    org_stderr = sys.stderr
+
+    try:
+        # Redirect stdout and stderr
+        sys.stdout = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, 'w')
+
+        start_time = time.time()
+        
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(video_url, download=True)
+            video_title = info_dict.get('title', None)
+            file_size = info_dict.get('filesize', None)
+        
+        end_time = time.time()
+        download_time = end_time - start_time
+        speed_mbps = (file_size * 8) / (download_time * 1_000_000) if file_size else None
+        speed_mbps = round(speed_mbps, 1)
+        
+        return {
+            'video_title': video_title,
+            'resolution': resolution,
+            'file_size_MB': file_size / 1_000_000 if file_size else None,
+            'download_time_sec': download_time,
+            'speed_Mbps': speed_mbps
+        }
+
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
+
+    finally:
+        # Restore stdout and stderr
+        sys.stdout = org_stdout
+        sys.stderr = org_stderr
+
+        temp_file = 'temp_video.webm'
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
 
 def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
@@ -42,7 +92,7 @@ def test_download_speed(url):
     return down_speed_byte * 8
 
 def show_download_speed():
-    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')    
+    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
     print(f'[{timedate_stamp}] testing download speed... ', end='')
     
     ping = ping_host(sys.argv[1])
@@ -53,33 +103,40 @@ def show_download_speed():
         print('ping error')
         return
 
-    print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
+    print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms, ', end='')
 
     url1, url2, url3, url4 = sys.argv[2:]
 
-    speed1 = test_download_speed(url1)
-    win32api.SetConsoleTitle('speed1 %d' % round(speed1 / 1_000_000))
-    speed2 = test_download_speed(url2)
-    win32api.SetConsoleTitle('speed2 %d' % round(speed2 / 1_000_000))
+    spd1 = test_download_speed(url1)
+    win32api.SetConsoleTitle('speed1 %d' % round(spd1 / 1_000_000))
+    spd2 = test_download_speed(url2)
+    win32api.SetConsoleTitle('speed2 %d' % round(spd2 / 1_000_000))
     # resulting speed is best of two
-    down_speed_1_mbit = round(max([speed1, speed2]) / 1_000_000, 1)
-    print('down1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_mbit}' + Style.RESET_ALL + f' mbit; ', end='')
-    speed3 = test_download_speed(url3)
-    win32api.SetConsoleTitle('speed3 %d' % round(speed3 / 1_000_000))
-    speed4 = test_download_speed(url4)
-    win32api.SetConsoleTitle('speed4 %d' % round(speed4 / 1_000_000))
-    # resulting speed is best of two
-    down_speed_2_mbit = round(max([speed3, speed4]) / 1_000_000, 1)
-    print('down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit')
+    down_speed_1_mbit = round(max([spd1, spd2]) / 1_000_000, 1)
+    print('down1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
 
+    win32api.SetConsoleTitle('yt test')
+    # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)', 'resolution': '360', 'file_size_MB': 6.625667, 'download_time_sec': 5.190907955169678, 'speed_Mbps': 10.211187803322817}
+    video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+    result = test_youtube_speed(video_url, '360')
+    down_speed_2_mbit = result['speed_Mbps']
+    print('down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
+
+    spd3 = test_download_speed(url3)
+    win32api.SetConsoleTitle('speed3 %d' % round(spd3 / 1_000_000))
+    spd4 = test_download_speed(url4)
+    win32api.SetConsoleTitle('speed4 %d' % round(spd4 / 1_000_000))
+    # resulting speed is best of two
+    down_speed_3_mbit = round(max([spd3, spd4]) / 1_000_000, 1)
+    print('down3 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_mbit}' + Style.RESET_ALL + f' mbit')
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
     if not os.path.exists(speed_file):
         with open(speed_file, 'a') as myfile:
-            myfile.write('"DATETIME","PING","DOWN1","DOWN2"\n')
+            myfile.write('"DATETIME","PING","DOWN1","DOWN2","DOWN3"\n')
     with open(speed_file, 'a') as myfile:
-        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1_mbit}","{down_speed_2_mbit}"\n')
+        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1_mbit}","{down_speed_2_mbit}","{down_speed_3_mbit}"\n')
 
 def get_win_uptime(): 
     # getting the library in which GetTickCount64() resides
@@ -168,6 +225,7 @@ def ping_host(host):
 ping_fails = 0
 ping_fails_str = ''
 def show_ping(host):
+    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
     # ping using classical ping
     ret_ping = ping_host(host)
     # make second ping try
