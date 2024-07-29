@@ -95,7 +95,7 @@ def get_win_uptime():
     # (format = x days, HH:MM:SS)
     return f"{days} days, {hour:02}:{mins:02}:{sec:02}"
 
-def DupeConsoleToFile(filepath):
+def dupe_console_to_file(filepath):
     class Logger(object):
         def __init__(self):
             self.logfile = open(filepath, 'ab', 0)
@@ -194,7 +194,7 @@ def reverse_ip(ip):
 
 def main():
     logfilename = time.strftime('%Y%m%d_%H%M%S_pingport.log')
-    DupeConsoleToFile(logfilename)
+    dupe_console_to_file(logfilename)
     timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
     init(convert=True, autoreset=True)
 
