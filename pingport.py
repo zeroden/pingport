@@ -41,11 +41,18 @@ def test_download_speed(url):
 
     return down_speed_byte * 8
 
-def get_download_speed():
+def show_download_speed():
     timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')    
     print(f'[{timedate_stamp}] testing download speed... ', end='')
     
-    ping = PingHost(sys.argv[1])
+    ping = ping_host(sys.argv[1])
+    if ping < 0:
+        time.sleep(5)
+        ping = ping_host(host)
+    if ping < 0:
+        print('ping error')
+        return
+
     print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms; ', end='')
 
     url1, url2, url3, url4 = sys.argv[2:]
@@ -145,7 +152,7 @@ def custom_sleep(i):
                 i = 0
                 j = 0
 
-def PingHost(host):
+def ping_host(host):
     try:
         output = subprocess.check_output(["ping", "-n", "1", host], stderr=subprocess.STDOUT, universal_newlines=True)
         # Extract the time in ms using regular expressions
@@ -160,13 +167,13 @@ def PingHost(host):
 
 ping_fails = 0
 ping_fails_str = ''
-def custom_ping(host):
+def show_ping(host):
     # ping using classical ping
-    ret_ping = PingHost(host)
+    ret_ping = ping_host(host)
     # make second ping try
     if ret_ping < 0:
         custom_sleep(5)
-        ret_ping = PingHost(host)
+        ret_ping = ping_host(host)
     if ret_ping >= 0:
         print(Style.BRIGHT + Fore.GREEN + '%d' % ret_ping, end='')
     else:
@@ -226,7 +233,7 @@ def main():
             rec = reader.get(wan_ip)
             print('isp: "%s"' % rec['autonomous_system_organization'])
 
-    get_download_speed()
+    show_download_speed()
 
     print('Press F1 for a manual ping\n')
 
@@ -251,7 +258,7 @@ def main():
             # reset half-hour marker
             last_30min = current_time
             print('')
-            get_download_speed()
+            show_download_speed()
 
         # Check if 24 hours have passed
         # print day stat
@@ -273,7 +280,7 @@ def main():
 
         ping_day_attempts += 1
 
-        result = custom_ping(host_to_ping)
+        result = show_ping(host_to_ping)
         if result:
             ping_day_ok += 1
         else:
