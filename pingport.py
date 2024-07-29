@@ -244,11 +244,12 @@ def main():
         # Check if 30 minutes have passed
         # print half-hour stat
         if current_time - last_30min >= 30 * 60:
+            # if computer slept for some time print how many hours
+            hours_slept = (current_time - last_30min) / 30 * 60 * 2
+            if (hours_slept >= 1):
+                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hours_slept, end='')
             # reset half-hour marker
             last_30min = current_time
-            # if computer slept for some time print how many hours
-            if (hour_timediff >= 2):
-                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hour_timediff, end='')
             print('')
             get_download_speed()
 
