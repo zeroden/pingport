@@ -51,15 +51,20 @@ def get_download_speed():
     url1, url2, url3, url4 = sys.argv[2:]
 
     speed1 = test_download_speed(url1)
+    win32api.SetConsoleTitle('speed1 %d' % round(speed1 / 1_000_000))
     speed2 = test_download_speed(url2)
-    speed3 = test_download_speed(url3)
-    speed4 = test_download_speed(url4)
-    
+    win32api.SetConsoleTitle('speed2 %d' % round(speed2 / 1_000_000))
     # resulting speed is best of two
     down_speed_1_mbit = round(max([speed1, speed2]) / 1_000_000, 1)
+    print('down1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_mbit}' + Style.RESET_ALL + f' mbit; ', end='')
+    speed3 = test_download_speed(url3)
+    win32api.SetConsoleTitle('speed3 %d' % round(speed3 / 1_000_000))
+    speed4 = test_download_speed(url4)
+    win32api.SetConsoleTitle('speed4 %d' % round(speed4 / 1_000_000))
+    # resulting speed is best of two
     down_speed_2_mbit = round(max([speed3, speed4]) / 1_000_000, 1)
+    print('down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit')
 
-    print('down1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_mbit}' + Style.RESET_ALL + f' mbit; down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit')
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
@@ -223,66 +228,52 @@ def main():
 
     get_download_speed()
 
-    print("Press F1 for a manual ping")
+    print('Press F1 for a manual ping\n')
 
-    timemark_prev_hour = time.time()
-    ping_hour_attempts = 0
+    last_30min = time.time()
+    last_24hours = time.time()
     ping_day_attempts = 0
-    ping_hour_ok = 0
     ping_day_ok = 0
-    hour_count = 0
     day_count = 0
-    day_stat_reset = 1
 
     while True:
         time_stamp = time.strftime('%H:%M:%S')
         timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
-        timemark_now = time.time()
+        current_time = time.time()
 
-        # print hour stat
-        hour_timediff = (timemark_now - timemark_prev_hour) / 3600
-        if (hour_timediff >= 1):
-            # reset hour marker
-            timemark_prev_hour = timemark_now
-            perc = Percentage(ping_hour_attempts, ping_hour_ok)
+        # Check if 30 minutes have passed
+        # print half-hour stat
+        if current_time - last_30min >= 30 * 60:
+            # reset half-hour marker
+            last_30min = current_time
             # if computer slept for some time print how many hours
             if (hour_timediff >= 2):
-                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hour_timediff)
-            # print regular hour mark
-            else:
-                hour_count += 1
-                partial = ''
-                if ping_hour_attempts != ping_hour_ok:
-                    partial = ' partial'
-                print('\n' + timedate_stamp + ' hour%02d%s uptime %s%%, %d outof %d %s' % (hour_count, partial, perc, ping_hour_ok, ping_hour_attempts, ping_fails_str))
-            # reset hour counters
-            ping_hour_attempts = 0
-            ping_hour_ok = 0
+                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hour_timediff, end='')
+            print('')
             get_download_speed()
 
+        # Check if 24 hours have passed
         # print day stat
-        if (day_stat_reset and hour_count != 0 and hour_count % 24 == 0):
-            day_stat_reset = 0
+        if current_time - last_24hours >= 24 * 60 * 60:
+            # reset day marker
+            last_24hours = current_time
             perc = Percentage(ping_day_attempts, ping_day_ok)
             day_count += 1
             partial = ''
             if ping_day_attempts != ping_day_ok:
                 partial = ' partial'
-            print(Style.BRIGHT + timedate_stamp + ' day%d  %s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
+            print(Style.BRIGHT + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
             print('windows uptime: "%s"' % GetWinUptime())
+            # empty string between days
+            print('')
             # reset day counters
             ping_day_attempts = 0
             ping_day_ok = 0
-        # reset day stat status to avoid stat dupes
-        elif (hour_count != 0 and hour_count % 25 == 0):
-            day_stat_reset = 1
 
-        ping_hour_attempts += 1
         ping_day_attempts += 1
 
         result = CustomPing(host_to_ping)
         if result:
-            ping_hour_ok += 1
             ping_day_ok += 1
         else:
             ping_fails += 1
@@ -290,7 +281,7 @@ def main():
             custom_sleep(10)
             continue
 
-        custom_sleep(120)
+        custom_sleep(60)
 
 if __name__ == "__main__":
     main()

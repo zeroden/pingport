@@ -14,21 +14,21 @@ def maximize_window(root):
 def plot_graph(root, dataframe):
     fig, ax1 = plt.subplots()
 
-    # Plot download speed on primary y-axis (left) with markers
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN1"], marker='o', linestyle='-', color='b', label="Download1")
-    ax1.set_xlabel("Date Time")
-    ax1.set_ylabel("Speed (Mbps)")
-    ax1.legend(loc='upper left')
+    # Plot ping on primary y-axis (left) with markers
+    ax1.plot(dataframe["DATETIME"], dataframe["PING"], marker='o', linestyle=':', color='y', label="Ping")
+    ax1.set_xlabel('Date Time')
+    ax1.set_ylabel('Ping (ms)')
+    ax1.legend(loc='lower left')
+
+    # Create a secondary y-axis for download1 with markers
+    ax2 = ax1.twinx()
+    ax2.plot(dataframe["DATETIME"], dataframe["DOWN1"], marker='o', linestyle='-', color='b', label="Download1")
+    ax2.legend(loc='upper left')
 
     # Create a secondary y-axis for download2 with markers
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN2"], marker='o', linestyle='-', color='g', label="Download2")
-    ax1.legend(loc='upper left')
-
-    # Create a secondary y-axis for ping with markers
-    ax3 = ax1.twinx()
-    ax3.plot(dataframe["DATETIME"], dataframe["PING"], marker='o', linestyle=':', color='y', label="Ping")
-    ax3.set_ylabel("Ping (ms)")
-    ax3.legend(loc='upper right')
+    ax2.plot(dataframe["DATETIME"], dataframe["DOWN2"], marker='o', linestyle='-', color='g', label="Download2")
+    ax2.set_ylabel('Speed (Mbps)')
+    ax2.legend(loc='upper left')
 
     # Format x-axis dates
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M:%S'))  # Example format
