@@ -14,6 +14,9 @@ import requests
 import os
 import yt_dlp as youtube_dl
 
+ping_fails = 0
+ping_fails_str = ''
+
 def set_console_title(s):
     win32api.SetConsoleTitle('pingport: ' + s)
 
@@ -226,8 +229,6 @@ def ping_host(host):
     except (subprocess.CalledProcessError, PermissionError, Exception):
         return -1  # General failure
 
-ping_fails = 0
-ping_fails_str = ''
 def show_ping(host):
     timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
     # ping using classical ping
@@ -262,6 +263,8 @@ def reverse_ip(ip):
     return host_rev
 
 def main():
+    global ping_fails
+
     logfilename = time.strftime('pingport_%Y%m%d_%H%M%S.log')
     dupe_console_to_file(logfilename)
     timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
