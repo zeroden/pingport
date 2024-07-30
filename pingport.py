@@ -242,11 +242,18 @@ def show_ping(host):
     else:
         print(Style.BRIGHT + Fore.RED + '\n' + '%s ping down %d' % (timedate_stamp, ping_fails + 1))
 
-    # ping using connect ping
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ret_sock = sock.connect_ex((host, 80))
+    sock = 0
+    ret_sock = -1
+    try:
+        # ping using connect ping
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        ret_sock = sock.connect_ex((host, 80))
+    except socket.error as e:
+        pass
+
     if sock:
         sock.close()
+
     if ret_sock == 0:
         print(Style.BRIGHT + Fore.GREEN + '.', end='');
     else:
