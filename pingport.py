@@ -68,6 +68,9 @@ def test_youtube_speed(video_url, resolution='360p'):
         temp_file = 'temp_video.webm'
         if os.path.exists(temp_file):
             os.remove(temp_file)
+        temp_file = 'temp_video.mp4'
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
 
 def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
