@@ -127,6 +127,10 @@ def show_download_speed(show_timestamp = True):
     # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)', 'resolution': '360', 'file_size_MB': 6.625667, 'download_time_sec': 5.190907955169678, 'speed_Mbps': 10.211187803322817}
     video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
     result = test_youtube_speed(video_url, '360')
+    if not type(result) == dict:
+        print('test_youtube_speed() failed [%s]' % result)
+        return
+        
     down_speed_2_mbit = result['speed_Mbps']
     print('down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
 
