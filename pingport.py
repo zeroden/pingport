@@ -12,10 +12,17 @@ import maxminddb
 import random
 import requests
 import os
-import yt_dlp as youtube_dl
+import yt_dlp
 
 ping_fails = 0
 ping_fails_str = ''
+
+# Get the handle of the current console window
+console_window_handle = ctypes.windll.kernel32.GetConsoleWindow()
+
+def get_active_window_handle():
+    # Get the handle of the currently active window
+    return ctypes.windll.user32.GetForegroundWindow()
 
 def set_console_title(s):
     win32api.SetConsoleTitle('pingport: ' + s)
@@ -25,8 +32,6 @@ def test_youtube_speed(video_url, resolution='360p'):
         'format': f'bestvideo[height<={resolution}]',
         'noplaylist': True,
         'outtmpl': 'temp_video.%(ext)s',
-        'quiet': True,
-        'no_warnings': True,
     }
     
     org_stdout = sys.stdout
@@ -39,7 +44,7 @@ def test_youtube_speed(video_url, resolution='360p'):
 
         start_time = time.time()
         
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)
             video_title = info_dict.get('title', None)
             file_size = info_dict.get('filesize', None)
@@ -132,10 +137,11 @@ def show_download_speed(show_timestamp = True):
     result = test_youtube_speed(video_url)
     # second try to measure yt speed
     if not type(result) == dict:
+        print('\ntest_youtube_speed() second try [%s]' % result)
         custom_sleep(5)
         result = test_youtube_speed(video_url)
         if not type(result) == dict:
-            print('test_youtube_speed() failed [%s]' % result)
+            print('\ntest_youtube_speed() failed [%s]' % result)
             return
         
     down_speed_2_mbit = result['speed_Mbps']
@@ -221,7 +227,7 @@ def custom_sleep(i):
         while j:
             j = j - 1
             time.sleep(0.1)
-            if (keyboard.is_pressed('f1')):
+            if get_active_window_handle() == console_window_handle and keyboard.is_pressed('f1'):
                 # manual ping
                 print('m', end='')
                 i = 0
@@ -289,7 +295,7 @@ def main():
     init(convert=True, autoreset=True)
 
     # Check if exactly 5 arguments (plus the script name) are passed
-    if len(sys.argv) != 6:
+    if len(sys.argv) < 6:
         print("Error: Please provide exactly 1 host and 4 URLs.")
         print("Usage: python pingport.py <host> <url1> <url2> <url3> <url4>")
         sys.exit(1)
@@ -301,22 +307,29 @@ def main():
     print('log: "%s"' % logfilename)
     print('windows uptime: "%s"' % get_win_uptime())
     print('host to ping: "%s"' % host_to_ping)
-    host_to_ping_ip = socket.gethostbyname(host_to_ping)
-    print('host to ping ip: "%s"' % host_to_ping_ip)
-    print('host to ping reverse: "%s"' % reverse_ip(host_to_ping_ip))
+    try:
+        host_to_ping_ip = socket.gethostbyname(host_to_ping)
+        print('host to ping ip: "%s"' % host_to_ping_ip)
+        print('host to ping ip reverse: "%s"' % reverse_ip(host_to_ping_ip))
+    except Exception as e:
+        print(f"host to ping ip: failed - {str(e)}")
     loc_ip = socket.gethostbyname(socket.getfqdn())
     print('local ip: "%s"' % loc_ip)
     print('local ip reverse: "{}"'.format(reverse_ip(loc_ip)))
     print('local name: "%s"' % socket.getfqdn())
-    wan_ip = get('https://api.ipify.org').content.decode('utf8')
-    print('wan ip: "{}"'.format(wan_ip))
-    print('wan ip reverse: "{}"'.format(reverse_ip(wan_ip)))
-    ip2isp_fn = 'dbip-asn-lite-2024-07.mmdb'
-    if os.path.exists(ip2isp_fn):
-        with maxminddb.open_database(ip2isp_fn) as reader:
-            rec = reader.get(wan_ip)
-            print('isp: "%s"' % rec['autonomous_system_organization'])
-    show_download_speed(show_timestamp = False)
+    try:
+        wan_ip = get('https://api.ipify.org').content.decode('utf8')
+        print('wan ip: "{}"'.format(wan_ip))
+        print('wan ip reverse: "{}"'.format(reverse_ip(wan_ip)))
+        ip2isp_fn = 'dbip-asn-lite-2024-07.mmdb'
+        if os.path.exists(ip2isp_fn):
+            with maxminddb.open_database(ip2isp_fn) as reader:
+                rec = reader.get(wan_ip)
+                print('isp: "%s"' % rec['autonomous_system_organization'])
+    except Exception as e:
+        print(f"wan ip: failed - {str(e)}")
+    if '--show-down-speed' in sys.argv:
+        show_download_speed(show_timestamp = False)
     print('Press F1 for a manual ping\n')
 
     last_30min = time.time()
@@ -340,7 +353,8 @@ def main():
             # reset half-hour marker
             last_30min = current_time
             print('')
-            show_download_speed()
+            if '--show-down-speed' in sys.argv:
+                show_download_speed()
 
         # Check if 24 hours have passed
         # print day stat
@@ -352,7 +366,7 @@ def main():
             partial = ''
             if ping_day_attempts != ping_day_ok:
                 partial = ' partial'
-            print(Style.BRIGHT + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
+            print(Style.BRIGHT + '\n' + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
             print('windows uptime: "%s"' % get_win_uptime())
             # empty string between days
             print('')
