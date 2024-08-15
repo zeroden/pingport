@@ -328,41 +328,41 @@ def main():
                 print('isp: "%s"' % rec['autonomous_system_organization'])
     except Exception as e:
         print(f"wan ip: failed - {str(e)}")
-    if '--show-down-speed' in sys.argv:
+    if '--show-download-speed' in sys.argv:
         show_download_speed(show_timestamp = False)
     print('Press F1 for a manual ping\n')
 
-    last_30min = time.time()
-    last_24hours = time.time()
+    last_60min_mark = time.time()
+    last_24hours_mark = time.time()
     ping_day_attempts = 0
     ping_day_ok = 0
+    hour_count = 0
     day_count = 0
+
 
     while True:
         time_stamp = time.strftime('%H:%M:%S')
         timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
         current_time = time.time()
 
-        # Check if 30 minutes have passed
-        # print half-hour stat
-        if current_time - last_30min >= 30 * 60:
-            # if computer slept for some time print how many hours
-            hours_slept = (current_time - last_30min) / (30 * 60 * 2)
-            if (hours_slept >= 1):
-                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours' % hours_slept, end='')
-            # reset half-hour marker
-            last_30min = current_time
-            print('')
-            if '--show-down-speed' in sys.argv:
+        # Check if 60 minutes have passed
+        hours_passed = (current_time - last_60min_mark) / 3600
+        if hours_passed >= 1:
+            last_60min_mark = current_time
+            hour_count += 1
+            if (hours_passed > 1):
+                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours slept' % hours_slept, end='')
+            print(timedate_stamp + ' hour%d' % hour_count)
+            if '--show-download-speed' in sys.argv:
                 show_download_speed()
 
         # Check if 24 hours have passed
         # print day stat
-        if current_time - last_24hours >= 24 * 60 * 60:
+        if current_time - last_24hours_mark >= 24 * 60 * 60:
             # reset day marker
-            last_24hours = current_time
-            perc = get_percentage(ping_day_attempts, ping_day_ok)
+            last_24hours_mark = current_time
             day_count += 1
+            perc = get_percentage(ping_day_attempts, ping_day_ok)
             partial = ''
             if ping_day_attempts != ping_day_ok:
                 partial = ' partial'
