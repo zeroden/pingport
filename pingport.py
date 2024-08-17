@@ -350,8 +350,8 @@ def main():
         if hours_passed >= 1:
             last_60min_mark = current_time
             hour_count += 1
-            if (hours_passed > 1):
-                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours slept' % hours_slept, end='')
+            if hours_passed >= 2:
+                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours slept' % hours_passed)
             print(timedate_stamp + ' hour%d' % hour_count)
             if '--show-download-speed' in sys.argv:
                 show_download_speed()
