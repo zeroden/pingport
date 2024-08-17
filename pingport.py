@@ -16,6 +16,7 @@ import yt_dlp
 
 ping_fails = 0
 ping_fails_str = ''
+last_newline_inverted = ''
 
 # Get the handle of the current console window
 console_window_handle = ctypes.windll.kernel32.GetConsoleWindow()
@@ -194,6 +195,11 @@ def dupe_console_to_file(filepath):
             self.prevstdout.flush()
             self.logfile.write(message.encode())
             self.logfile.flush()
+            global last_newline_inverted
+            if message[-1] == '\n':
+                last_newline_inverted = ''
+            else:
+                last_newline_inverted = '\n'
 
         def __del__(self):
             self.logfile.close()
@@ -351,8 +357,8 @@ def main():
             last_60min_mark = current_time
             hour_count += 1
             if hours_passed >= 2:
-                print(Style.BRIGHT + '\n' + timedate_stamp + ' +%d hours slept' % hours_passed)
-            print(timedate_stamp + ' hour%d' % hour_count)
+                print(last_newline_inverted + Style.BRIGHT + timedate_stamp + ' +%d hours slept' % hours_passed)
+            print(last_newline_inverted + timedate_stamp + ' hour%d' % hour_count)
             if '--show-download-speed' in sys.argv:
                 show_download_speed()
 
@@ -366,7 +372,7 @@ def main():
             partial = ''
             if ping_day_attempts != ping_day_ok:
                 partial = ' partial'
-            print(Style.BRIGHT + '\n' + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
+            print(last_newline_inverted + Style.BRIGHT + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
             print('windows uptime: "%s"' % get_win_uptime())
             # empty string between days
             print('')
