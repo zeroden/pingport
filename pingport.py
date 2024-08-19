@@ -111,15 +111,17 @@ def show_download_speed(show_timestamp = True):
 
     print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms, ', end='')
 
-    url1, url2, url3, url4 = sys.argv[2:]
+    url_1, url_2, url_3, url_4 = sys.argv[2:]
 
     set_console_title('testing speed1')
-    spd1 = test_download_speed(url1)
-    set_console_title('speed1 is %d' % round(spd1 / 1_000_000))
-    spd2 = test_download_speed(url2)
-    # resulting speed is best of two
-    down_speed_1_mbit = round(max([spd1, spd2]) / 1_000_000, 1)
-    print('down1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
+    down_speed_1 = round(test_download_speed(url_1) / 1_000_000, 1)
+    print('d1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1}' + Style.RESET_ALL + f' mbit, ', end='')
+    down_speed_2 = round(test_download_speed(url_2)/ 1_000_000, 1)
+    print('d2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2}' + Style.RESET_ALL + f' mbit, ', end='')
+    down_speed_3 = round(test_download_speed(url_3)/ 1_000_000, 1)
+    print('d3 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3}' + Style.RESET_ALL + f' mbit, ', end='')
+    down_speed_4 = round(test_download_speed(url_4)/ 1_000_000, 1)
+    print('d4 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_4}' + Style.RESET_ALL + f' mbit, ', end='')
 
     # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)'}
     video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
@@ -128,24 +130,16 @@ def show_download_speed(show_timestamp = True):
     if not result:
         print(last_newline_inverted + 'test_youtube_speed() failed')
         return
-        
-    down_speed_2_mbit = round(result, 1)
-    print('down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
-
-    spd3 = test_download_speed(url3)
-    set_console_title('speed3 is %d' % round(spd3 / 1_000_000))
-    spd4 = test_download_speed(url4)
-    # resulting speed is best of two
-    down_speed_3_mbit = round(max([spd3, spd4]) / 1_000_000, 1)
-    print('down3 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_mbit}' + Style.RESET_ALL + f' mbit')
+    down_speed_5 = round(result, 1)
+    print('yt ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_5}' + Style.RESET_ALL + f' mbit')
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
     if not os.path.exists(speed_file):
         with open(speed_file, 'a') as myfile:
-            myfile.write('"DATETIME","PING","DOWN1","DOWN2","DOWN3"\n')
+            myfile.write('"DATETIME","PING","DOWN1","DOWN2","DOWN3","DOWN4","DOWN5"\n')
     with open(speed_file, 'a') as myfile:
-        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1_mbit}","{down_speed_2_mbit}","{down_speed_3_mbit}"\n')
+        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1}","{down_speed_2}","{down_speed_3}","{down_speed_4}","{down_speed_5}"\n')
 
 def get_win_uptime(): 
     # getting the library in which GetTickCount64() resides
