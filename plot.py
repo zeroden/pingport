@@ -14,26 +14,27 @@ def maximize_window(root):
 def plot_graph(root, dataframe):
     fig, ax1 = plt.subplots()
 
-    # Plot ping on primary y-axis (left) with markers
-    ax1.plot(dataframe["DATETIME"], dataframe["PING"], marker='o', linestyle=':', color='y', label="Ping")
+    # Create y-axis for download1
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN1"], marker='o', linestyle=':', color='b', label="Download1")
     ax1.set_xlabel('Date Time')
-    ax1.set_ylabel('Ping (ms)')
-    ax1.legend(loc='lower left')
+    ax1.set_ylabel('Speed (Mbps)')
+    ax1.legend(loc='upper left')
 
-    # Create a secondary y-axis for download1 with markers
-    ax2 = ax1.twinx()
-    ax2.plot(dataframe["DATETIME"], dataframe["DOWN1"], marker='o', linestyle='-', color='b', label="Download1")
-    ax2.legend(loc='upper left')
+    # Create y-axis for download2
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN2"], marker='o', linestyle='-', color='b', label="Download2")
+    ax1.legend(loc='upper left')
 
-    # Create a secondary y-axis for download2 with markers
-    ax2.plot(dataframe["DATETIME"], dataframe["DOWN2"], marker='o', linestyle='-', color='r', label="Download2")
-    ax2.set_ylabel('Speed (Mbps)')
-    ax2.legend(loc='upper left')
+    # Create y-axis for download3
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN3"], marker='o', linestyle=':', color='g', label="Download3")
+    ax1.legend(loc='upper left')
+    
+    # Create y-axis for download4
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN4"], marker='o', linestyle='-', color='g', label="Download4")
+    ax1.legend(loc='upper left')
 
-    # Create a tertiary y-axis for download3 with markers
-    ax2.plot(dataframe["DATETIME"], dataframe["DOWN3"], marker='o', linestyle='-', color='g', label="Download3")
-    ax2.set_ylabel('Speed (Mbps)')
-    ax2.legend(loc='upper left')
+    # Create y-axis for download5
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN5"], marker='o', linestyle='-', color='r', label="Download5")
+    ax1.legend(loc='upper left')
 
     # Format x-axis dates
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M:%S'))  # Example format
@@ -64,17 +65,23 @@ def plot_graph(root, dataframe):
     min_download_3 = dataframe["DOWN3"].min()
     avg_download_3 = dataframe["DOWN3"].mean()
 
-    max_ping = dataframe["PING"].max()
-    min_ping = dataframe["PING"].min()
-    avg_ping = dataframe["PING"].mean()
+    max_download_4 = dataframe["DOWN4"].max()
+    min_download_4 = dataframe["DOWN4"].min()
+    avg_download_4 = dataframe["DOWN4"].mean()
+
+    max_download_5 = dataframe["DOWN5"].max()
+    min_download_5 = dataframe["DOWN5"].min()
+    avg_download_5 = dataframe["DOWN5"].mean()
 
     # Display statistics
-    stats_text = f"Download1 ex - Max: {max_download_1:.2f} Mbps, Min: {min_download_1:.2f} Mbps, Avg: {avg_download_1:.2f} Mbps\n" \
-                 f"Download2 yt - Max: {max_download_2:.2f} Mbps, Min: {min_download_2:.2f} Mbps, Avg: {avg_download_2:.2f} Mbps\n" \
-                 f"Download3 in - Max: {max_download_3:.2f} Mbps, Min: {min_download_3:.2f} Mbps, Avg: {avg_download_3:.2f} Mbps\n" \
-                 f"Ping - Max: {max_ping:.2f} ms, Min: {min_ping:.2f} ms, Avg: {avg_ping:.2f} ms"
+    stats_text = f"Download1 - Max:{max_download_1:6.2f} Mbps, Min:{min_download_1:6.2f} Mbps, Avg:{avg_download_1:6.2f} Mbps\n" \
+                 f"Download2 - Max:{max_download_2:6.2f} Mbps, Min:{min_download_2:6.2f} Mbps, Avg:{avg_download_2:6.2f} Mbps\n" \
+                 f"Download3 - Max:{max_download_3:6.2f} Mbps, Min:{min_download_3:6.2f} Mbps, Avg:{avg_download_3:6.2f} Mbps\n" \
+                 f"Download4 - Max:{max_download_4:6.2f} Mbps, Min:{min_download_4:6.2f} Mbps, Avg:{avg_download_4:6.2f} Mbps\n" \
+                 f"Download5 - Max:{max_download_5:6.2f} Mbps, Min:{min_download_5:6.2f} Mbps, Avg:{avg_download_5:6.2f} Mbps\n"
 
-    stats_label = ttk.Label(root, text=stats_text, wraplength=600)
+    monospace_font = ('Courier New', 12)  # Font family and size
+    stats_label = ttk.Label(root, text=stats_text, font=monospace_font)
     stats_label.pack(pady=10)
 
     canvas = FigureCanvasTkAgg(fig, master=root)
