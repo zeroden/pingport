@@ -13,6 +13,8 @@ import random
 import requests
 import os
 import yt_dlp
+import contextlib
+from io import StringIO
 
 ping_fails = 0
 ping_fails_str = ''
@@ -28,55 +30,41 @@ def get_active_window_handle():
 def set_console_title(s):
     win32api.SetConsoleTitle('pingport: ' + s)
 
-def test_youtube_speed(video_url, resolution='360p'):
+def test_youtube_speed(video_url):
+    temp_filename = "temp_video.mp4"
+    speed_pattern = re.compile(r'at (\d+\.\d+)MiB/s')
+    max_speed_mbps = 0
+
     ydl_opts = {
-        'format': f'bestvideo[height<={resolution}]',
+        'format': 'worst[ext=mp4]',
         'noplaylist': True,
-        'outtmpl': 'temp_video.%(ext)s',
+        'quiet': False,  # Set to False to capture log messages
+        'outtmpl': temp_filename,
+        'force_generic_extractor': True,
     }
-    
-    org_stdout = sys.stdout
-    org_stderr = sys.stderr
 
-    try:
-        # Redirect stdout and stderr
-        sys.stdout = open(os.devnull, 'w')
-        sys.stderr = open(os.devnull, 'w')
+    # Remove the temp file if it exists
+    if os.path.exists(temp_filename):
+        os.remove(temp_filename)
 
-        start_time = time.time()
-        
+    # Capture the log output
+    log_output = StringIO()
+    with contextlib.redirect_stdout(log_output), contextlib.redirect_stderr(log_output):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(video_url, download=True)
-            video_title = info_dict.get('title', None)
-            file_size = info_dict.get('filesize', None)
-        
-        end_time = time.time()
-        download_time = end_time - start_time
-        speed_mbps = (file_size * 8) / (download_time * 1_000_000) if file_size else None
-        speed_mbps = round(speed_mbps, 1)
-        
-        return {
-            'video_title': video_title,
-            'resolution': resolution,
-            'file_size_MB': file_size / 1_000_000 if file_size else None,
-            'download_time_sec': download_time,
-            'speed_Mbps': speed_mbps
-        }
+            ydl.download([video_url])
 
-    except Exception as e:
-        return f"An error occurred: {str(e)}"
+    # Parse and extract speed from the log output
+    log_contents = log_output.getvalue()
+    match = speed_pattern.search(log_contents)
+    if match:
+        speed_mibps = float(match.group(1))
+        max_speed_mbps = speed_mibps * 8 * (1024 / 1000)  # Convert MiB/s to Mbps
 
-    finally:
-        # Restore stdout and stderr
-        sys.stdout = org_stdout
-        sys.stderr = org_stderr
+    # Clean up the temporary file after downloading
+    if os.path.exists(temp_filename):
+        os.remove(temp_filename)
 
-        temp_file = 'temp_video.webm'
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
-        temp_file = 'temp_video.mp4'
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
+    return max_speed_mbps
 
 def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
@@ -133,19 +121,15 @@ def show_download_speed(show_timestamp = True):
     down_speed_1_mbit = round(max([spd1, spd2]) / 1_000_000, 1)
     print('down1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
 
-    # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)', 'resolution': '360', 'file_size_MB': 6.625667, 'download_time_sec': 5.190907955169678, 'speed_Mbps': 10.211187803322817}
+    # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)'}
     video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
     result = test_youtube_speed(video_url)
     # second try to measure yt speed
-    if not type(result) == dict:
-        print('\ntest_youtube_speed() second try [%s]' % result)
-        custom_sleep(5)
-        result = test_youtube_speed(video_url)
-        if not type(result) == dict:
-            print('\ntest_youtube_speed() failed [%s]' % result)
-            return
+    if not result:
+        print(last_newline_inverted + 'test_youtube_speed() failed')
+        return
         
-    down_speed_2_mbit = result['speed_Mbps']
+    down_speed_2_mbit = round(result, 1)
     print('down2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2_mbit}' + Style.RESET_ALL + f' mbit, ', end='')
 
     spd3 = test_download_speed(url3)
@@ -301,7 +285,7 @@ def main():
     init(convert=True, autoreset=True)
 
     # Check if exactly 5 arguments (plus the script name) are passed
-    if len(sys.argv) < 6:
+    if len(sys.argv) != 6:
         print("Error: Please provide exactly 1 host and 4 URLs.")
         print("Usage: python pingport.py <host> <url1> <url2> <url3> <url4>")
         sys.exit(1)
@@ -334,8 +318,7 @@ def main():
                 print('isp: "%s"' % rec['autonomous_system_organization'])
     except Exception as e:
         print(f"wan ip: failed - {str(e)}")
-    if '--show-download-speed' in sys.argv:
-        show_download_speed(show_timestamp = False)
+    show_download_speed(show_timestamp = False)
     print('Press F1 for a manual ping\n')
 
     last_60min_mark = time.time()
@@ -359,8 +342,7 @@ def main():
             if hours_passed >= 2:
                 print(last_newline_inverted + Style.BRIGHT + timedate_stamp + ' +%d hours slept' % hours_passed)
             print(last_newline_inverted + timedate_stamp + ' hour%d' % hour_count)
-            if '--show-download-speed' in sys.argv:
-                show_download_speed()
+            show_download_speed()
 
         # Check if 24 hours have passed
         # print day stat
