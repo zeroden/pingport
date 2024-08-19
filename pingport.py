@@ -263,7 +263,7 @@ def show_ping(host):
     if ret_ping >= 0:
         print(Style.BRIGHT + Fore.GREEN + '%d' % ret_ping, end='')
     else:
-        print(Style.BRIGHT + Fore.RED + '\n' + '%s ping down %d' % (timedate_stamp, ping_fails + 1))
+        print(last_newline_inverted + Style.BRIGHT + Fore.RED + '%s ping down %d' % (timedate_stamp, ping_fails + 1))
 
     sock = 0
     ret_sock = -1
@@ -280,7 +280,7 @@ def show_ping(host):
     if ret_sock == 0:
         print(Style.BRIGHT + Fore.GREEN + '.', end='');
     else:
-        print(Style.BRIGHT + Fore.RED + '\n' + '%s conn down %d' % (timedate_stamp, ping_fails + 1))
+        print(last_newline_inverted + Style.BRIGHT + Fore.RED + '%s conn down %d' % (timedate_stamp, ping_fails + 1))
 
     # successful only if both type of pings are ok
     return ret_ping >= 0 and ret_sock == 0
