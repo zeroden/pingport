@@ -288,6 +288,7 @@ def main():
     print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started'))
     print('python version: "%s"' % sys.version)
     print('python path: "%s"' % sys.executable)
+    print('cmdl: <%s>' % win32api.GetCommandLine())
     print('log: "%s"' % logfilename)
     print('windows uptime: "%s"' % get_win_uptime())
     print('host to ping: "%s"' % host_to_ping)
