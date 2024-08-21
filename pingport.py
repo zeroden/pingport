@@ -94,12 +94,8 @@ def test_download_speed(url):
 
     return down_speed_byte * 8
 
-def show_download_speed(show_timestamp = True):
-    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
-    if show_timestamp:
-        print(f'[{timedate_stamp}] testing download speed... ', end='')
-    else:
-        print('testing download speed... ', end='')
+def show_download_speed():
+    print('testing download speed... ', end='')
     
     ping = ping_host(sys.argv[1])
     if ping < 0:
@@ -113,7 +109,6 @@ def show_download_speed(show_timestamp = True):
 
     url_1, url_2, url_3, url_4 = sys.argv[2:]
 
-    set_console_title('testing speed1')
     down_speed_1 = round(test_download_speed(url_1) / 1_000_000, 1)
     print('d1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1}' + Style.RESET_ALL + f' mbit, ', end='')
     down_speed_2 = round(test_download_speed(url_2)/ 1_000_000, 1)
@@ -139,6 +134,7 @@ def show_download_speed(show_timestamp = True):
         with open(speed_file, 'a') as myfile:
             myfile.write('"DATETIME","PING","DOWN1","DOWN2","DOWN3","DOWN4","DOWN5"\n')
     with open(speed_file, 'a') as myfile:
+        timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
         myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1}","{down_speed_2}","{down_speed_3}","{down_speed_4}","{down_speed_5}"\n')
 
 def get_win_uptime(): 
@@ -211,11 +207,17 @@ def custom_sleep(i):
         while j:
             j = j - 1
             time.sleep(0.1)
-            if get_active_window_handle() == console_window_handle and keyboard.is_pressed('f1'):
+            if get_active_window_handle() == console_window_handle:
                 # manual ping
-                print('m', end='')
-                i = 0
-                j = 0
+                if keyboard.is_pressed('f1'):
+                    print('m', end='')
+                    i = 0
+                    j = 0
+                # manual speed test
+                elif keyboard.is_pressed('f2'):
+                    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+                    print(last_newline_inverted + f'[{timedate_stamp}] manual ', end='')
+                    show_download_speed()
 
 def ping_host(host):
     try:
@@ -313,8 +315,8 @@ def main():
                 print('isp: "%s"' % rec['autonomous_system_organization'])
     except Exception as e:
         print(f"wan ip: failed - {str(e)}")
-    show_download_speed(show_timestamp = False)
-    print('Press F1 for a manual ping\n')
+    show_download_speed()
+    print('Press F1 for a manual ping, F2 for manual speed test\n')
 
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
@@ -325,7 +327,6 @@ def main():
 
 
     while True:
-        time_stamp = time.strftime('%H:%M:%S')
         timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
         current_time = time.time()
 
@@ -335,7 +336,7 @@ def main():
             last_60min_mark = current_time
             hour_count += 1
             if hours_passed >= 2:
-                print(last_newline_inverted + Style.BRIGHT + timedate_stamp + ' +%d hours slept' % hours_passed)
+                print(last_newline_inverted + Style.BRIGHT + ' +%d hours slept' % hours_passed)
             print(last_newline_inverted + timedate_stamp + ' hour%d' % hour_count)
             show_download_speed()
 
