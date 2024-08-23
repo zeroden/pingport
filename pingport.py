@@ -71,7 +71,13 @@ def test_download_speed(url):
     url = url + '?x=%s' % anti_cache_stamp
 
     start_time = time.time()
-    response = requests.get(url, stream=True)
+    response = None
+    try:
+        response = requests.get(url, stream=True)
+    except Exception as e:
+        print('test_download_speed.requests.get() failed [%s]' % e)
+        return 0
+
     total_length = response.headers.get('content-length')
 
     if total_length is None:
@@ -109,14 +115,31 @@ def show_download_speed():
 
     url_1, url_2, url_3, url_4 = sys.argv[2:]
 
-    down_speed_1 = round(test_download_speed(url_1) / 1_000_000, 1)
-    print('d1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1}' + Style.RESET_ALL + f' mbit, ', end='')
-    down_speed_2 = round(test_download_speed(url_2)/ 1_000_000, 1)
-    print('d2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_2}' + Style.RESET_ALL + f' mbit, ', end='')
-    down_speed_3 = round(test_download_speed(url_3)/ 1_000_000, 1)
-    print('d3 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3}' + Style.RESET_ALL + f' mbit, ', end='')
-    down_speed_4 = round(test_download_speed(url_4)/ 1_000_000, 1)
-    print('d4 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_4}' + Style.RESET_ALL + f' mbit, ', end='')
+    down_speed_1 = test_download_speed(url_1)
+    if not down_speed_1:
+        print('test_download_speed(url_1) failed')
+        return
+    down_speed_1 = round(down_speed_1 / 1_000_000, 1)
+    down_speed_2 = test_download_speed(url_2)
+    if not down_speed_2:
+        print('test_download_speed(url_2) failed')
+        return
+    down_speed_2 = round(down_speed_2 / 1_000_000, 1)
+    down_speed_1_2 = max(down_speed_1, down_speed_2)
+    print('d1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + f' mbit, ', end='')
+
+    down_speed_3 = test_download_speed(url_3)
+    if not down_speed_3:
+        print('test_download_speed(url_3) failed')
+        return
+    down_speed_3 = round(down_speed_3 / 1_000_000, 1)
+    down_speed_4 = test_download_speed(url_4)
+    if not down_speed_4:
+        print('test_download_speed(url_4) failed')
+        return
+    down_speed_4 = round(down_speed_4 / 1_000_000, 1)
+    down_speed_3_4 = max(down_speed_3, down_speed_4)
+    print('d2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + f' mbit, ', end='')
 
     # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)'}
     video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
@@ -132,10 +155,10 @@ def show_download_speed():
     # if speed file not exist create header in it
     if not os.path.exists(speed_file):
         with open(speed_file, 'a') as myfile:
-            myfile.write('"DATETIME","PING","DOWN1","DOWN2","DOWN3","DOWN4","DOWN5"\n')
+            myfile.write('"DATETIME","PING","DOWN12","DOWN34","DOWN5"\n')
     with open(speed_file, 'a') as myfile:
         timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
-        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1}","{down_speed_2}","{down_speed_3}","{down_speed_4}","{down_speed_5}"\n')
+        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1_2}","{down_speed_3_4}","{down_speed_5}"\n')
 
 def get_win_uptime(): 
     # getting the library in which GetTickCount64() resides
@@ -336,7 +359,7 @@ def main():
             last_60min_mark = current_time
             hour_count += 1
             if hours_passed >= 2:
-                print(last_newline_inverted + Style.BRIGHT + ' +%d hours slept' % hours_passed)
+                print(last_newline_inverted + Style.BRIGHT + '+%d hours slept' % hours_passed)
             print(last_newline_inverted + timedate_stamp + ' hour%d' % hour_count)
             show_download_speed()
 
