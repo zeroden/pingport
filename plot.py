@@ -15,27 +15,19 @@ def plot_graph(root, dataframe):
     fig, ax1 = plt.subplots()
 
     # Create y-axis for download1
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN1"], marker='o', linestyle=':', color='b', label="Download1")
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN12"], marker='o', linestyle='-', color='b', label="Download1")
     ax1.set_xlabel('Date Time')
     ax1.set_ylabel('Speed (Mbps)')
     ax1.legend(loc='upper left')
 
     # Create y-axis for download2
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN2"], marker='o', linestyle='-', color='b', label="Download2")
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN34"], marker='o', linestyle='-', color='g', label="Download2")
     ax1.legend(loc='upper left')
 
     # Create y-axis for download3
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN3"], marker='o', linestyle=':', color='g', label="Download3")
+    ax1.plot(dataframe["DATETIME"], dataframe["DOWN5"], marker='o', linestyle='-', color='r', label="Download3")
     ax1.legend(loc='upper left')
     
-    # Create y-axis for download4
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN4"], marker='o', linestyle='-', color='g', label="Download4")
-    ax1.legend(loc='upper left')
-
-    # Create y-axis for download5
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN5"], marker='o', linestyle='-', color='r', label="Download5")
-    ax1.legend(loc='upper left')
-
     # Format x-axis dates
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M:%S'))  # Example format
 
@@ -53,32 +45,22 @@ def plot_graph(root, dataframe):
     ax1.grid(True, which='both', linestyle=':', linewidth=0.5)  # Customize grid lines as needed
 
     # Calculate statistics
-    max_download_1 = dataframe["DOWN1"].max()
-    min_download_1 = dataframe["DOWN1"].min()
-    avg_download_1 = dataframe["DOWN1"].mean()
+    max_download_1 = dataframe["DOWN12"].max()
+    min_download_1 = dataframe["DOWN12"].min()
+    avg_download_1 = dataframe["DOWN12"].mean()
 
-    max_download_2 = dataframe["DOWN2"].max()
-    min_download_2 = dataframe["DOWN2"].min()
-    avg_download_2 = dataframe["DOWN2"].mean()
+    max_download_2 = dataframe["DOWN34"].max()
+    min_download_2 = dataframe["DOWN34"].min()
+    avg_download_2 = dataframe["DOWN34"].mean()
 
-    max_download_3 = dataframe["DOWN3"].max()
-    min_download_3 = dataframe["DOWN3"].min()
-    avg_download_3 = dataframe["DOWN3"].mean()
-
-    max_download_4 = dataframe["DOWN4"].max()
-    min_download_4 = dataframe["DOWN4"].min()
-    avg_download_4 = dataframe["DOWN4"].mean()
-
-    max_download_5 = dataframe["DOWN5"].max()
-    min_download_5 = dataframe["DOWN5"].min()
-    avg_download_5 = dataframe["DOWN5"].mean()
+    max_download_3 = dataframe["DOWN5"].max()
+    min_download_3 = dataframe["DOWN5"].min()
+    avg_download_3 = dataframe["DOWN5"].mean()
 
     # Display statistics
     stats_text = f"Download1 - Max:{max_download_1:6.2f} Mbps, Min:{min_download_1:6.2f} Mbps, Avg:{avg_download_1:6.2f} Mbps\n" \
                  f"Download2 - Max:{max_download_2:6.2f} Mbps, Min:{min_download_2:6.2f} Mbps, Avg:{avg_download_2:6.2f} Mbps\n" \
-                 f"Download3 - Max:{max_download_3:6.2f} Mbps, Min:{min_download_3:6.2f} Mbps, Avg:{avg_download_3:6.2f} Mbps\n" \
-                 f"Download4 - Max:{max_download_4:6.2f} Mbps, Min:{min_download_4:6.2f} Mbps, Avg:{avg_download_4:6.2f} Mbps\n" \
-                 f"Download5 - Max:{max_download_5:6.2f} Mbps, Min:{min_download_5:6.2f} Mbps, Avg:{avg_download_5:6.2f} Mbps\n"
+                 f"Download3 - Max:{max_download_3:6.2f} Mbps, Min:{min_download_3:6.2f} Mbps, Avg:{avg_download_3:6.2f} Mbps\n"
 
     monospace_font = ('Courier New', 12)  # Font family and size
     stats_label = ttk.Label(root, text=stats_text, font=monospace_font)
