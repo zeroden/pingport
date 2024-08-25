@@ -71,24 +71,21 @@ def test_download_speed(url):
     url = url + '?x=%s' % anti_cache_stamp
 
     start_time = time.time()
-    response = None
     try:
         response = requests.get(url, stream=True)
+        total_length = response.headers.get('content-length')
+        if total_length is None:
+            data = response.content
+        else:
+            dl = 0
+            data = bytearray()
+            total_length = int(total_length)
+            for chunk in response.iter_content(chunk_size=4096):
+                dl += len(chunk)
+                data.extend(chunk)
     except Exception as e:
         print('test_download_speed.requests.get() failed [%s]' % e)
         return 0
-
-    total_length = response.headers.get('content-length')
-
-    if total_length is None:
-        data = response.content
-    else:
-        dl = 0
-        data = bytearray()
-        total_length = int(total_length)
-        for chunk in response.iter_content(chunk_size=4096):
-            dl += len(chunk)
-            data.extend(chunk)
 
     end_time = time.time()
     elapsed_time = end_time - start_time
