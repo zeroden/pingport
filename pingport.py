@@ -102,9 +102,6 @@ def show_download_speed():
     
     ping = ping_host(sys.argv[1])
     if ping < 0:
-        time.sleep(5)
-        ping = ping_host(host)
-    if ping < 0:
         print('ping error')
         return
 
