@@ -33,7 +33,6 @@ def set_console_title(s):
 def test_youtube_speed(video_url):
     temp_filename = "temp_video.mp4"
     speed_pattern = re.compile(r'at (\d+\.\d+)MiB/s')
-    max_speed_mbps = 0
 
     ydl_opts = {
         'format': 'worst[ext=mp4]',
@@ -58,13 +57,15 @@ def test_youtube_speed(video_url):
     match = speed_pattern.search(log_contents)
     if match:
         speed_mibps = float(match.group(1))
-        max_speed_mbps = speed_mibps * 8 * (1024 / 1000)  # Convert MiB/s to Mbps
+        yt_speed_mbps = speed_mibps * 8 * (1024 / 1000)  # Convert MiB/s to Mbps
+    else:
+        yt_speed_mbps = 0
 
     # Clean up the temporary file after downloading
     if os.path.exists(temp_filename):
         os.remove(temp_filename)
 
-    return max_speed_mbps
+    return yt_speed_mbps
 
 def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
