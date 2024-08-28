@@ -28,6 +28,10 @@ def plot_graph(root, dataframe):
     ax1.plot(dataframe["DATETIME"], dataframe["DOWN5"], marker='o', linestyle='-', color='r', label="Download3")
     ax1.legend(loc='upper left')
     
+    ax1.yaxis.set_ticks_position('both')  # Ticks on both left and right
+    ax_right = ax1.twinx()  # Create a twin axis for the right side
+    ax_right.set_ylim(ax1.get_ylim())  # Ensure the limits are the same
+
     # Format x-axis dates
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M:%S'))  # Example format
 
