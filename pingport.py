@@ -150,10 +150,10 @@ def show_download_speed():
     # if speed file not exist create header in it
     if not os.path.exists(speed_file):
         with open(speed_file, 'a') as myfile:
-            myfile.write('"DATETIME","PING","DOWN12","DOWN34","DOWN5"\n')
+            myfile.write('DATETIME,PING,DOWN12,DOWN34,DOWN5\n')
     with open(speed_file, 'a') as myfile:
         timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
-        myfile.write(f'"{timedate_stamp}","{ping}","{down_speed_1_2}","{down_speed_3_4}","{down_speed_5}"\n')
+        myfile.write(f'{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n')
 
 def get_win_uptime(): 
     # getting the library in which GetTickCount64() resides
@@ -356,6 +356,8 @@ def main():
             if hours_passed >= 2:
                 print(last_newline_inverted + Style.BRIGHT + '+%d hours slept' % hours_passed)
             print(last_newline_inverted + timedate_stamp + ' hour%d' % hour_count)
+            # wait some time after unsleep to allow network up
+            custom_sleep(10)
             show_download_speed()
 
         # Check if 24 hours have passed
