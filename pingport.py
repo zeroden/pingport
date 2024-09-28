@@ -50,7 +50,11 @@ def test_youtube_speed(video_url):
     log_output = StringIO()
     with contextlib.redirect_stdout(log_output), contextlib.redirect_stderr(log_output):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([video_url])
+            try:
+                ydl.download([video_url])
+            except Exception as e:
+                print('ydl.download() failed [%s]' % e)
+                return 0
 
     # Parse and extract speed from the log output
     log_contents = log_output.getvalue()
