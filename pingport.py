@@ -117,12 +117,10 @@ def show_download_speed():
     down_speed_1 = test_download_speed(url_1)
     if not down_speed_1:
         print('test_download_speed(url_1) failed')
-        return
     down_speed_1 = round(down_speed_1 / 1_000_000, 1)
     down_speed_2 = test_download_speed(url_2)
     if not down_speed_2:
         print('test_download_speed(url_2) failed')
-        return
     down_speed_2 = round(down_speed_2 / 1_000_000, 1)
     down_speed_1_2 = max(down_speed_1, down_speed_2)
     print('d1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + f' mbit, ', end='')
@@ -130,12 +128,10 @@ def show_download_speed():
     down_speed_3 = test_download_speed(url_3)
     if not down_speed_3:
         print('test_download_speed(url_3) failed')
-        return
     down_speed_3 = round(down_speed_3 / 1_000_000, 1)
     down_speed_4 = test_download_speed(url_4)
     if not down_speed_4:
         print('test_download_speed(url_4) failed')
-        return
     down_speed_4 = round(down_speed_4 / 1_000_000, 1)
     down_speed_3_4 = max(down_speed_3, down_speed_4)
     print('d2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + f' mbit, ', end='')
@@ -146,7 +142,6 @@ def show_download_speed():
     # second try to measure yt speed
     if not result:
         print(last_newline_inverted + 'test_youtube_speed() failed')
-        return
     down_speed_5 = round(result, 1)
     print('yt ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_5}' + Style.RESET_ALL + f' mbit')
 
