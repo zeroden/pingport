@@ -35,7 +35,7 @@ def test_youtube_speed(video_url):
     speed_pattern = re.compile(r'at (\d+\.\d+)MiB/s')
 
     ydl_opts = {
-        'format': 'worst*[ext=mp4]',
+        'format': '135', # 135 mp4   854x480     25    │    8.28MiB  328k https │ avc1.4D401E    328k video only          480p, mp4_dash
         'noplaylist': True,
         'quiet': False,  # Set to False to capture log messages
         'outtmpl': temp_filename,
