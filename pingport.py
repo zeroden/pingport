@@ -103,7 +103,7 @@ def test_download_speed(url):
     return down_speed_byte * 8
 
 def show_download_speed():
-    print('testing download speed... ', end='')
+    print('test down speed: ', end='')
     
     ping = ping_host(sys.argv[1])
     if ping < 0:
