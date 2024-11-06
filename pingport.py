@@ -159,7 +159,10 @@ def show_download_speed():
 def get_win_uptime(): 
     # getting the library in which GetTickCount64() resides
     lib = ctypes.windll.kernel32
-     
+
+    # Set the return type to match the expected unsigned 64-bit integer (no negatives values)
+    lib.GetTickCount64.restype = ctypes.c_ulonglong
+
     # calling the function and storing the return value
     t = lib.GetTickCount64()
      
