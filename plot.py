@@ -15,17 +15,20 @@ def plot_graph(root, dataframe):
     fig, ax1 = plt.subplots()
 
     # Create y-axis for download1
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN12"], marker='o', linestyle='-', color='b', label="Download1")
+    dataframe_without_zeroes_12 = dataframe[dataframe['DOWN12'] != 0]
+    ax1.plot(dataframe_without_zeroes_12["DATETIME"], dataframe_without_zeroes_12["DOWN12"], marker='o', linestyle='-', color='b', label="Download1")
     ax1.set_xlabel('Date Time')
     ax1.set_ylabel('Speed (Mbps)')
     ax1.legend(loc='upper left')
 
     # Create y-axis for download2
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN34"], marker='o', linestyle='-', color='g', label="Download2")
+    dataframe_without_zeroes_34 = dataframe[dataframe['DOWN34'] != 0]
+    ax1.plot(dataframe_without_zeroes_34["DATETIME"], dataframe_without_zeroes_34["DOWN34"], marker='o', linestyle='-', color='g', label="Download2")
     ax1.legend(loc='upper left')
 
     # Create y-axis for download3
-    ax1.plot(dataframe["DATETIME"], dataframe["DOWN5"], marker='o', linestyle='-', color='r', label="Download3")
+    dataframe_without_zeroes_5 = dataframe[dataframe['DOWN5'] != 0]
+    ax1.plot(dataframe_without_zeroes_5["DATETIME"], dataframe_without_zeroes_5["DOWN5"], marker='o', linestyle='-', color='r', label="Download3")
     ax1.legend(loc='upper left')
     
     ax1.yaxis.set_ticks_position('both')  # Ticks on both left and right
@@ -49,17 +52,17 @@ def plot_graph(root, dataframe):
     ax1.grid(True, which='both', linestyle=':', linewidth=0.5)  # Customize grid lines as needed
 
     # Calculate statistics
-    max_download_1 = dataframe["DOWN12"].max()
-    min_download_1 = dataframe["DOWN12"].min()
-    avg_download_1 = dataframe["DOWN12"].mean()
+    max_download_1 = dataframe_without_zeroes_12["DOWN12"].max()
+    min_download_1 = dataframe_without_zeroes_12["DOWN12"].min()
+    avg_download_1 = dataframe_without_zeroes_12["DOWN12"].mean()
 
-    max_download_2 = dataframe["DOWN34"].max()
-    min_download_2 = dataframe["DOWN34"].min()
-    avg_download_2 = dataframe["DOWN34"].mean()
+    max_download_2 = dataframe_without_zeroes_34["DOWN34"].max()
+    min_download_2 = dataframe_without_zeroes_34["DOWN34"].min()
+    avg_download_2 = dataframe_without_zeroes_34["DOWN34"].mean()
 
-    max_download_3 = dataframe["DOWN5"].max()
-    min_download_3 = dataframe["DOWN5"].min()
-    avg_download_3 = dataframe["DOWN5"].mean()
+    max_download_3 = dataframe_without_zeroes_5["DOWN5"].max()
+    min_download_3 = dataframe_without_zeroes_5["DOWN5"].min()
+    avg_download_3 = dataframe_without_zeroes_5["DOWN5"].mean()
 
     # Display statistics
     stats_text = f"Download1 - Max:{max_download_1:6.2f} Mbps, Min:{min_download_1:6.2f} Mbps, Avg:{avg_download_1:6.2f} Mbps\n" \
