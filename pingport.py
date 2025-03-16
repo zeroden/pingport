@@ -110,9 +110,9 @@ def show_download_speed():
         print('ping error')
         return
 
-    print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms, ', end='')
+    print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms', end='')
 
-    url_1, url_2, url_3, url_4 = sys.argv[2:]
+    url_1, url_2, url_3, url_4 = sys.argv[2:6]
 
     down_speed_1 = test_download_speed(url_1)
     if not down_speed_1:
@@ -124,7 +124,7 @@ def show_download_speed():
     down_speed_2 = round(down_speed_2 / 1_000_000, 1)
     down_speed_1_2 = max(down_speed_1, down_speed_2)
     if down_speed_1_2:
-        print('d1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + f' mbit, ', end='')
+        print(', d1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + f' mbit', end='')
 
     down_speed_3 = test_download_speed(url_3)
     if not down_speed_3:
@@ -136,16 +136,20 @@ def show_download_speed():
     down_speed_4 = round(down_speed_4 / 1_000_000, 1)
     down_speed_3_4 = max(down_speed_3, down_speed_4)
     if down_speed_3_4:
-        print('d2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + f' mbit, ', end='')
+        print(', d2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + f' mbit', end='')
 
-    # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)'}
-    video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-    result = test_youtube_speed(video_url)
-    down_speed_5 = round(result, 1)
-    if not down_speed_5:
-        print(last_newline_inverted + 'test_youtube_speed() failed')
-    else:
-        print('yt ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_5}' + Style.RESET_ALL + f' mbit')
+    down_speed_5 = 0
+    if len(sys.argv) >= 7 and sys.argv[6] == '--enable-yt-speed':
+        # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)'}
+        video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+        result = test_youtube_speed(video_url)
+        down_speed_5 = round(result, 1)
+        if not down_speed_5:
+            print(last_newline_inverted + 'test_youtube_speed() failed')
+        else:
+            print(', yt ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_5}' + Style.RESET_ALL + f' mbit', end='')
+
+    print('')
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
@@ -302,10 +306,10 @@ def main():
     timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
     init(convert=True, autoreset=True)
 
-    # Check if exactly 5 arguments (plus the script name) are passed
-    if len(sys.argv) != 6:
+    # Check if atleast 5 arguments (plus the script name) are passed
+    if len(sys.argv) < 6:
         print("Error: Please provide exactly 1 host and 4 URLs.")
-        print("Usage: python pingport.py <host> <url1> <url2> <url3> <url4>")
+        print("Usage: python pingport.py <host> <url1> <url2> <url3> <url4> --enable-yt-speed")
         sys.exit(1)
     host_to_ping = sys.argv[1]
 
