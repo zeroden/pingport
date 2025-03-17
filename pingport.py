@@ -313,7 +313,7 @@ def main():
         sys.exit(1)
     host_to_ping = sys.argv[1]
 
-    print(Style.BRIGHT + Fore.CYAN + time.strftime(timedate_stamp + ' pingport started'))
+    print(Style.BRIGHT + Fore.CYAN + timedate_stamp + ' pingport started')
     print('python version: "%s"' % sys.version)
     print('python path: "%s"' % sys.executable)
     print('cmdl: <%s>' % win32api.GetCommandLine())
