@@ -15,10 +15,12 @@ import os
 import yt_dlp
 import contextlib
 from io import StringIO
+import argparse
 
 ping_fails = 0
 ping_fails_str = ''
 last_newline_inverted = ''
+args = None
 
 # Get the handle of the current console window
 console_window_handle = ctypes.windll.kernel32.GetConsoleWindow()
@@ -103,16 +105,21 @@ def test_download_speed(url):
     return down_speed_byte * 8
 
 def show_download_speed():
+    global args
+
     print('test down speed: ', end='')
     
-    ping = ping_host(sys.argv[1])
+    ping = ping_host(args.host_to_ping)
     if ping < 0:
         print('ping error')
         return
 
     print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms', end='')
 
-    url_1, url_2, url_3, url_4 = sys.argv[2:6]
+    url_1 = args.local_url1
+    url_2 = args.local_url2
+    url_3 = args.global_url1
+    url_4 = args.global_url2
 
     down_speed_1 = test_download_speed(url_1)
     if not down_speed_1:
@@ -139,7 +146,7 @@ def show_download_speed():
         print(', d2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + f' mbit', end='')
 
     down_speed_5 = 0
-    if len(sys.argv) >= 7 and sys.argv[6] == '--enable-yt-speed':
+    if args.enable_yt_speed:
         # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)'}
         video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
         result = test_youtube_speed(video_url)
@@ -299,19 +306,21 @@ def reverse_ip(ip):
     return host_rev
 
 def main():
-    global ping_fails
+    global ping_fails, args
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host-to-ping", help="Host for ping", required=True)
+    parser.add_argument("--local-url1", help="Local url 1", required=True)
+    parser.add_argument("--local-url2", help="Local url 2", required=True)
+    parser.add_argument("--global-url1", help="Global url 1", required=True)
+    parser.add_argument("--global-url2", help="Global url 2", required=True)
+    parser.add_argument("--enable-yt-speed", action="store_true", help="Enable youtube speed test (optional)")
+    args = parser.parse_args()
 
     logfilename = time.strftime('pingport_%Y%m%d_%H%M%S.log')
     dupe_console_to_file(logfilename)
     timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
     init(convert=True, autoreset=True)
-
-    # Check if atleast 5 arguments (plus the script name) are passed
-    if len(sys.argv) < 6:
-        print("Error: Please provide exactly 1 host and 4 URLs.")
-        print("Usage: python pingport.py <host> <url1> <url2> <url3> <url4> --enable-yt-speed")
-        sys.exit(1)
-    host_to_ping = sys.argv[1]
 
     print(Style.BRIGHT + Fore.CYAN + timedate_stamp + ' pingport started')
     print('python version: "%s"' % sys.version)
@@ -319,9 +328,9 @@ def main():
     print('cmdl: <%s>' % win32api.GetCommandLine())
     print('log: "%s"' % logfilename)
     print('windows uptime: "%s"' % get_win_uptime())
-    print('host to ping: "%s"' % host_to_ping)
+    print('host to ping: "%s"' % args.host_to_ping)
     try:
-        host_to_ping_ip = socket.gethostbyname(host_to_ping)
+        host_to_ping_ip = socket.gethostbyname(args.host_to_ping)
         print('host to ping ip: "%s"' % host_to_ping_ip)
         print('host to ping ip reverse: "%s"' % reverse_ip(host_to_ping_ip))
     except Exception as e:
@@ -388,7 +397,7 @@ def main():
 
         ping_day_attempts += 1
 
-        result = show_ping(host_to_ping)
+        result = show_ping(args.host_to_ping)
         if result:
             ping_day_ok += 1
         else:
