@@ -373,11 +373,12 @@ def main():
 
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
+    first_offline_mark = 0
     ping_day_attempts = 0
     ping_day_ok = 0
     hour_count = 0
     day_count = 0
-    ping_fails_consecutive = 0
+    telegram_message = ''
 
     while True:
         timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
@@ -418,26 +419,27 @@ def main():
         result = show_ping(args.host_to_ping)
         if result:
             ping_day_ok += 1
+            first_offline_mark = 0
             if args.telegram_update and telegram_message:
                 bot_token, bot_chat_id = telegram_update.split(";")
                 send_telegram(bot_token, bot_chat_id, telegram_message)
                 telegram_message = ''
-            ping_fails_consecutive = 0
         else:
             telegram_message += f'{timedate_stamp} ping fail\n'
             ping_fails += 1
-            ping_fails_consecutive += 1
-            if args.enable_hibernate_offline:
+            if not first_offline_mark:
+                first_offline_mark = current_time
+            # if 15 min offline
+            if args.enable_hibernate_offline and current_time - first_offline_mark >= 15 * 60:
+                print(f'hibernation in 15 mins')
+            # if 30 min offline
+            if args.enable_hibernate_offline and current_time - first_offline_mark >= 30 * 60:
                 if ping_fails_consecutive % 6 == 0:
-                    minutes_passed = ping_fails_consecutive // 6  # 6 increments = 1 minute
-                    minutes_remaining = 10 - minutes_passed
-                    print(f'hibernation in {minutes_remaining} min')
-                # if 10 min offline (10 min * 6 fail pings in min = 60)
-                if ping_fails_consecutive >= 60:
                     print('hibernation activated')
                     # Command to open a new cmd window, wait, then hibernate
                     cmd = f'start cmd /k "echo delayed hibernation & timeout /t 300 && shutdown /h"'
                     subprocess.Popen(cmd, shell=True)
+
             # if ping failed don't wait long time for next try
             custom_sleep(10)
             continue
