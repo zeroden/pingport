@@ -306,12 +306,12 @@ def reverse_ip(ip):
         host_rev = err
     return host_rev
 
-def send_telegram(bot_token, bot_chat_id, text):
+def send_telegram(telegram_update, text):
     try:
         max_length = 4096
         if len(text) > max_length:
             text = text[:max_length - 3] + "..."  # Add ellipsis to indicate truncation
-
+        bot_token, bot_chat_id = telegram_update.split(";")
         api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
         data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True}
         response = requests.post(api_url, data=data)
@@ -340,7 +340,10 @@ def main():
     timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
     init(convert=True, autoreset=True)
 
-    print(Style.BRIGHT + Fore.CYAN + timedate_stamp + ' pingport started')
+    start_msg = timedate_stamp + ' pingport started'
+    print(Style.BRIGHT + Fore.CYAN + start_msg)
+    send_telegram(args.telegram_update, start_msg) if args.telegram_update else None
+
     print('python version: "%s"' % sys.version)
     print('python path: "%s"' % sys.executable)
     print('cmdl: <%s>' % win32api.GetCommandLine())
@@ -390,7 +393,9 @@ def main():
             last_60min_mark = current_time
             hour_count += 1
             if hours_passed >= 2:
-                print(last_newline_inverted + Style.BRIGHT + '+%d hours slept' % hours_passed)
+                hours_msg = '+%d hours slept' % hours_passed
+                print(last_newline_inverted + Style.BRIGHT + hours_msg)
+                send_telegram(args.telegram_update, hours_msg) if args.telegram_update else None
             print(last_newline_inverted + timedate_stamp + ' hour%d' % hour_count)
             # wait some time after unsleep to allow network up
             custom_sleep(10)
@@ -421,8 +426,7 @@ def main():
             ping_day_ok += 1
             first_offline_mark = 0
             if args.telegram_update and telegram_message:
-                bot_token, bot_chat_id = telegram_update.split(";")
-                send_telegram(bot_token, bot_chat_id, telegram_message)
+                send_telegram(args.telegram_update, telegram_message)
                 telegram_message = ''
         else:
             telegram_message += f'{timedate_stamp} ping fail\n'
