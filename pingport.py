@@ -105,6 +105,26 @@ def test_download_speed(url):
 
     return down_speed_byte * 8
 
+def send_telegram(text):
+    global args
+
+    if not args.telegram_update:
+        return
+
+    try:
+        max_length = 4096
+        if len(text) > max_length:
+            text = text[:max_length - 3] + "..."  # Add ellipsis to indicate truncation
+        bot_token, bot_chat_id = args.telegram_update.split(";")
+        api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True}
+        response = requests.post(api_url, data=data)
+        if not response.ok:
+            print(get_timestamp() + f"Telegram error: {response.status_code} - {response.text}")
+    except Exception as e:
+        msg = get_timestamp() + f"Error sending Telegram message: {e}"
+        print(msg)
+
 def show_download_speed():
     global args
 
@@ -115,7 +135,7 @@ def show_download_speed():
         print('ping error')
         return
 
-    print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms', end='')
+    print('ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms', end='')
 
     url_1 = args.global_url1
     url_2 = args.global_url2
@@ -132,7 +152,7 @@ def show_download_speed():
     down_speed_2 = round(down_speed_2 / 1_000_000, 1)
     down_speed_1_2 = max(down_speed_1, down_speed_2)
     if down_speed_1_2:
-        print(', d1 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + f' mbit', end='')
+        print(', glob ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + ' mbit', end='')
 
     down_speed_3 = test_download_speed(url_3)
     if not down_speed_3:
@@ -144,7 +164,10 @@ def show_download_speed():
     down_speed_4 = round(down_speed_4 / 1_000_000, 1)
     down_speed_3_4 = max(down_speed_3, down_speed_4)
     if down_speed_3_4:
-        print(', d2 ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + f' mbit', end='')
+        print(', loc ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + ' mbit', end='')
+
+    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+    tg_msg = f'[{timedate_stamp}] test down speed: ping {ping} ms, glob {down_speed_1_2} mbit, loc {down_speed_3_4} mbit'
 
     down_speed_5 = 0
     if args.enable_yt_speed:
@@ -156,16 +179,19 @@ def show_download_speed():
             print(last_newline_inverted + 'test_youtube_speed() failed')
         else:
             print(', yt ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_5}' + Style.RESET_ALL + f' mbit', end='')
+            tg_msg += f', yt {down_speed_5}'
 
+    # print newline to done with speed output
     print('')
+
+    send_telegram(tg_msg)
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
     if not os.path.exists(speed_file):
         with open(speed_file, 'a') as myfile:
-            myfile.write('DATETIME,PING,DOWN12,DOWN34,DOWN5\n')
+            myfile.write('DATETIME,PING,GLOB,LOC,YT\n')
     with open(speed_file, 'a') as myfile:
-        timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
         myfile.write(f'{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n')
 
 def get_win_uptime(): 
@@ -306,21 +332,6 @@ def reverse_ip(ip):
         host_rev = err
     return host_rev
 
-def send_telegram(telegram_update, text):
-    try:
-        max_length = 4096
-        if len(text) > max_length:
-            text = text[:max_length - 3] + "..."  # Add ellipsis to indicate truncation
-        bot_token, bot_chat_id = telegram_update.split(";")
-        api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True}
-        response = requests.post(api_url, data=data)
-        if not response.ok:
-            print(get_timestamp() + f"Telegram error: {response.status_code} - {response.text}")
-    except Exception as e:
-        msg = get_timestamp() + f"Error sending Telegram message: {e}"
-        print(msg)
-
 def main():
     global ping_fails, args
 
@@ -342,7 +353,7 @@ def main():
 
     start_msg = timedate_stamp + ' pingport started'
     print(Style.BRIGHT + Fore.CYAN + start_msg)
-    send_telegram(args.telegram_update, start_msg) if args.telegram_update else None
+    send_telegram(start_msg)
 
     print('python version: "%s"' % sys.version)
     print('python path: "%s"' % sys.executable)
@@ -395,10 +406,10 @@ def main():
             if hours_passed >= 2:
                 hours_msg = '+%d hours slept' % hours_passed
                 print(last_newline_inverted + Style.BRIGHT + hours_msg)
-                send_telegram(args.telegram_update, hours_msg) if args.telegram_update else None
+                send_telegram(hours_msg)
+                # wait some time after unsleep to allow network up
+                custom_sleep(10)
             print(last_newline_inverted + timedate_stamp + ' hour%d' % hour_count)
-            # wait some time after unsleep to allow network up
-            custom_sleep(10)
             show_download_speed()
 
         # Check if 24 hours have passed
@@ -425,8 +436,8 @@ def main():
         if result:
             ping_day_ok += 1
             first_offline_mark = 0
-            if args.telegram_update and telegram_message:
-                send_telegram(args.telegram_update, telegram_message)
+            if telegram_message:
+                send_telegram(telegram_message)
                 telegram_message = ''
         else:
             telegram_message += f'{timedate_stamp} ping fail\n'
