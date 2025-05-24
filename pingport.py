@@ -16,6 +16,7 @@ import yt_dlp
 import contextlib
 from io import StringIO
 import argparse
+import subprocess
 
 ping_fails = 0
 ping_fails_str = ''
@@ -315,6 +316,7 @@ def main():
     parser.add_argument("--global-url1", help="Global url 1", required=True)
     parser.add_argument("--global-url2", help="Global url 2", required=True)
     parser.add_argument("--enable-yt-speed", action="store_true", help="Enable youtube speed test (optional)")
+    parser.add_argument("--enable-hibernate-offline", action="store_true", help="Hibernation of long offline (optional)")
     args = parser.parse_args()
 
     logfilename = time.strftime('pingport_%Y%m%d_%H%M%S.log')
@@ -359,7 +361,7 @@ def main():
     ping_day_ok = 0
     hour_count = 0
     day_count = 0
-
+    ping_fails_consecutive = 0
 
     while True:
         timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
@@ -400,12 +402,26 @@ def main():
         result = show_ping(args.host_to_ping)
         if result:
             ping_day_ok += 1
+            ping_fails_consecutive = 0
         else:
             ping_fails += 1
-            # don't wait long time for next try
+            ping_fails_consecutive += 1
+            if args.enable_hibernate_offline:
+                if ping_fails_consecutive % 6 == 0:
+                    minutes_passed = ping_fails_consecutive // 6  # 6 increments = 1 minute
+                    minutes_remaining = 10 - minutes_passed
+                    print(f'hibernation in {minutes_remaining} min')
+                # if 10 min offline (10 min * 6 fail pings in min = 60)
+                if ping_fails_consecutive >= 60:
+                    print('hibernation activated')
+                    # Command to open a new cmd window, wait, then hibernate
+                    cmd = f'start cmd /k "echo delayed hibernation & timeout /t 300 && shutdown /h"'
+                    subprocess.Popen(cmd, shell=True)
+            # if ping failed don't wait long time for next try
             custom_sleep(10)
             continue
 
+        # next good ping timeout
         custom_sleep(60)
 
 if __name__ == "__main__":
