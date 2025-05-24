@@ -117,10 +117,10 @@ def show_download_speed():
 
     print(f'ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms', end='')
 
-    url_1 = args.local_url1
-    url_2 = args.local_url2
-    url_3 = args.global_url1
-    url_4 = args.global_url2
+    url_1 = args.global_url1
+    url_2 = args.global_url2
+    url_3 = args.local_url1
+    url_4 = args.local_url2
 
     down_speed_1 = test_download_speed(url_1)
     if not down_speed_1:
