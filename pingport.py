@@ -306,6 +306,21 @@ def reverse_ip(ip):
         host_rev = err
     return host_rev
 
+def send_telegram(bot_token, bot_chat_id, text):
+    try:
+        max_length = 4096
+        if len(text) > max_length:
+            text = text[:max_length - 3] + "..."  # Add ellipsis to indicate truncation
+
+        api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True}
+        response = requests.post(api_url, data=data)
+        if not response.ok:
+            print(get_timestamp() + f"Telegram error: {response.status_code} - {response.text}")
+    except Exception as e:
+        msg = get_timestamp() + f"Error sending Telegram message: {e}"
+        print(msg)
+
 def main():
     global ping_fails, args
 
@@ -317,6 +332,7 @@ def main():
     parser.add_argument("--global-url2", help="Global url 2", required=True)
     parser.add_argument("--enable-yt-speed", action="store_true", help="Enable youtube speed test (optional)")
     parser.add_argument("--enable-hibernate-offline", action="store_true", help="Hibernation of long offline (optional)")
+    parser.add_argument("--telegram-update", help="Send data to telegram bot (optional)")
     args = parser.parse_args()
 
     logfilename = time.strftime('pingport_%Y%m%d_%H%M%S.log')
@@ -402,8 +418,13 @@ def main():
         result = show_ping(args.host_to_ping)
         if result:
             ping_day_ok += 1
+            if args.telegram_update and telegram_message:
+                bot_token, bot_chat_id = telegram_update.split(";")
+                send_telegram(bot_token, bot_chat_id, telegram_message)
+                telegram_message = ''
             ping_fails_consecutive = 0
         else:
+            telegram_message += f'{timedate_stamp} ping fail\n'
             ping_fails += 1
             ping_fails_consecutive += 1
             if args.enable_hibernate_offline:
