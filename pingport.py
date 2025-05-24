@@ -117,7 +117,7 @@ def send_telegram(text):
             text = text[:max_length - 3] + "..."  # Add ellipsis to indicate truncation
         bot_token, bot_chat_id = args.telegram_update.split(";")
         api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True}
+        data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True, "parse_mode": "HTML"}
         response = requests.post(api_url, data=data)
         if not response.ok:
             print(get_timestamp() + f"Telegram error: {response.status_code} - {response.text}")
@@ -135,7 +135,7 @@ def show_download_speed():
         print('ping error')
         return
 
-    print('ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + ' ms', end='')
+    print('ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + 'ms', end='')
 
     url_1 = args.global_url1
     url_2 = args.global_url2
@@ -152,7 +152,7 @@ def show_download_speed():
     down_speed_2 = round(down_speed_2 / 1_000_000, 1)
     down_speed_1_2 = max(down_speed_1, down_speed_2)
     if down_speed_1_2:
-        print(', glob ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + ' mbit', end='')
+        print(', glob ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + 'mbit', end='')
 
     down_speed_3 = test_download_speed(url_3)
     if not down_speed_3:
@@ -164,10 +164,10 @@ def show_download_speed():
     down_speed_4 = round(down_speed_4 / 1_000_000, 1)
     down_speed_3_4 = max(down_speed_3, down_speed_4)
     if down_speed_3_4:
-        print(', loc ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + ' mbit', end='')
+        print(', loc ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + 'mbit', end='')
 
     timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
-    tg_msg = f'[{timedate_stamp}] test down speed: ping {ping} ms, glob {down_speed_1_2} mbit, loc {down_speed_3_4} mbit'
+    tg_msg = f'ping <b>{ping}</b>ms ▒ glob <b>{down_speed_1_2}</b>mbit ▒ loc <b>{down_speed_3_4}</b>mbit'
 
     down_speed_5 = 0
     if args.enable_yt_speed:
@@ -178,7 +178,7 @@ def show_download_speed():
         if not down_speed_5:
             print(last_newline_inverted + 'test_youtube_speed() failed')
         else:
-            print(', yt ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_5}' + Style.RESET_ALL + f' mbit', end='')
+            print(', yt ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_5}' + Style.RESET_ALL + f'mbit', end='')
             tg_msg += f', yt {down_speed_5}'
 
     # print newline to done with speed output
