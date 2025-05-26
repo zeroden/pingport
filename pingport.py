@@ -128,7 +128,11 @@ def send_telegram(text):
 def show_download_speed(msg = ''):
     global args
 
-    print('%s, speed: ' % msg, end='')
+    if msg:
+        msg = '%s, speed: ' % msg
+    else:
+        msg = 'speed: '
+    print(msg, end='')
     
     ping = ping_host(args.host_to_ping)
     if ping < 0:
