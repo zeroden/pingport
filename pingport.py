@@ -125,10 +125,10 @@ def send_telegram(text):
         msg = get_timestamp() + f"Error sending Telegram message: {e}"
         print(msg)
 
-def show_download_speed():
+def show_download_speed(msg = ''):
     global args
 
-    print('test down speed: ', end='')
+    print('%s, speed: ' % msg, end='')
     
     ping = ping_host(args.host_to_ping)
     if ping < 0:
@@ -276,8 +276,8 @@ def custom_sleep(i):
                 # manual speed test
                 elif keyboard.is_pressed('f2'):
                     timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
-                    print(last_newline_inverted + f'[{timedate_stamp}] manual ', end='')
-                    show_download_speed()
+                    msg = last_newline_inverted + f'[{timedate_stamp}] manual'
+                    show_download_speed(msg)
 
 def ping_host(host):
     try:
@@ -409,8 +409,8 @@ def main():
                 send_telegram(hours_msg)
                 # wait some time after unsleep to allow network up
                 custom_sleep(10)
-            print(last_newline_inverted + timedate_stamp + ' hour%d' % hour_count)
-            show_download_speed()
+            msg = last_newline_inverted + timedate_stamp + ' hour%d' % hour_count
+            show_download_speed(msg)
 
         # Check if 24 hours have passed
         # print day stat
@@ -422,8 +422,13 @@ def main():
             partial = ''
             if ping_day_attempts != ping_day_ok:
                 partial = ' partial'
-            print(last_newline_inverted + Style.BRIGHT + timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str))
-            print('windows uptime: "%s"' % get_win_uptime())
+            day_msg = timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
+            print(last_newline_inverted + Style.BRIGHT + day_msg)
+            send_telegram(day_msg)
+            day_msg = 'windows uptime: "%s"' % get_win_uptime()
+            print(day_msg)
+            send_telegram(day_msg)
+
             # empty string between days
             print('')
             # reset day counters
