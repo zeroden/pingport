@@ -442,27 +442,27 @@ def main():
         ping_day_attempts += 1
 
         result = show_ping(args.host_to_ping)
+        # ping ok
         if result:
             ping_day_ok += 1
             first_offline_mark = 0
             if telegram_message:
                 send_telegram(telegram_message)
                 telegram_message = ''
+        # in case of ping fail check if hiberanation needed
         else:
             telegram_message += f'{timedate_stamp} ping fail\n'
             ping_fails += 1
             if not first_offline_mark:
                 first_offline_mark = current_time
-            # if 15 min offline
-            if args.enable_hibernate_offline and current_time - first_offline_mark >= 15 * 60:
-                print(f'hibernation in 15 mins')
             # if 30 min offline
             if args.enable_hibernate_offline and current_time - first_offline_mark >= 30 * 60:
-                if ping_fails_consecutive % 6 == 0:
-                    print('hibernation activated')
-                    # Command to open a new cmd window, wait, then hibernate
-                    cmd = f'start cmd /k "echo delayed hibernation & timeout /t 300 && shutdown /h"'
-                    subprocess.Popen(cmd, shell=True)
+                print('hibernation activated')
+                # reset hibernation timer
+                first_offline_mark = current_time
+                # Command to open a new cmd window, wait, then hibernate
+                cmd = f'start cmd /k "echo delayed hibernation & timeout /t 300 && shutdown /h"'
+                subprocess.Popen(cmd, shell=True)
 
             # if ping failed don't wait long time for next try
             custom_sleep(10)
