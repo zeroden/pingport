@@ -105,6 +105,9 @@ def test_download_speed(url):
 
     return down_speed_byte * 8
 
+def get_timestamp(fmt = '%Y-%m-%d %H:%M:%S'):
+    return time.strftime(fmt)
+
 def send_telegram(text):
     global args
 
@@ -120,9 +123,9 @@ def send_telegram(text):
         data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True, "parse_mode": "HTML"}
         response = requests.post(api_url, data=data)
         if not response.ok:
-            print(get_timestamp() + f"Telegram error: {response.status_code} - {response.text}")
+            print(get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f"Telegram error: {response.status_code} - {response.text}")
     except Exception as e:
-        msg = get_timestamp() + f"Error sending Telegram message: {e}"
+        msg = get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f"Error sending Telegram message: {e}"
         print(msg)
 
 def show_download_speed(msg = ''):
@@ -170,7 +173,7 @@ def show_download_speed(msg = ''):
     if down_speed_3_4:
         print(', loc ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + 'mbit', end='')
 
-    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+    timedate_stamp = get_timestamp()
     tg_msg = f'ping <b>{ping}</b>ms ▒ glob <b>{down_speed_1_2}</b>mbit ▒ loc <b>{down_speed_3_4}</b>mbit'
 
     down_speed_5 = 0
@@ -279,7 +282,7 @@ def custom_sleep(i):
                     j = 0
                 # manual speed test
                 elif keyboard.is_pressed('f2'):
-                    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+                    timedate_stamp = get_timestamp()
                     msg = last_newline_inverted + f'[{timedate_stamp}] manual'
                     show_download_speed(msg)
 
@@ -297,7 +300,7 @@ def ping_host(host):
         return -1  # General failure
 
 def show_ping(host):
-    timedate_stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+    timedate_stamp = get_timestamp()
     # ping using classical ping
     ret_ping = ping_host(host)
     # make second ping try
@@ -350,9 +353,9 @@ def main():
     parser.add_argument("--telegram-update", help="Send data to telegram bot (optional)")
     args = parser.parse_args()
 
-    logfilename = time.strftime('pingport_%Y%m%d_%H%M%S.log')
+    logfilename = get_timestamp('pingport_%Y%m%d_%H%M%S.log')
     dupe_console_to_file(logfilename)
-    timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
+    timedate_stamp = get_timestamp('[%Y-%m-%d %H:%M:%S]')
     init(convert=True, autoreset=True)
 
     start_msg = timedate_stamp + ' pingport started'
@@ -399,7 +402,7 @@ def main():
     telegram_message = ''
 
     while True:
-        timedate_stamp = time.strftime('[%Y-%m-%d %H:%M:%S]')
+        timedate_stamp = get_timestamp('[%Y-%m-%d %H:%M:%S]')
         current_time = time.time()
 
         # Check if 60 minutes have passed
