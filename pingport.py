@@ -339,6 +339,20 @@ def reverse_ip(ip):
         host_rev = err
     return host_rev
 
+def nice_time(time):
+    # Format based on elapsed time size
+    if time < 60:
+        return f'{time:.0f} seconds'
+    elif time < 3600:
+        minutes = time / 60
+        return f'{minutes:.0f} minutes'
+    elif time < 86400:
+        hours = time / 3600
+        return f'{hours:.0f} hours'
+    else:
+        days = time / 86400
+        return f'{days:.0f} days'
+
 def main():
     global ping_fails, args
 
@@ -395,6 +409,7 @@ def main():
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
     first_offline_mark = 0
+    first_offline_time = 0
     ping_day_attempts = 0
     ping_day_ok = 0
     hour_count = 0
@@ -449,7 +464,16 @@ def main():
         if result:
             ping_day_ok += 1
             first_offline_mark = 0
+            offline_msg = ''
+            if first_offline_time:
+                offline_time_raw = current_time - first_offline_time
+                offline_time_nice = nice_time(offline_time_raw)
+                offline_msg = f'{timedate_stamp} back online, downtime lasted {offline_time_nice}'
+                print(offline_msg)
+                first_offline_time = 0
             if telegram_message:
+                if offline_msg:
+                    telegram_message += '\n' + offline_msg
                 send_telegram(telegram_message)
                 telegram_message = ''
         # in case of ping fail check if hiberanation needed
@@ -458,6 +482,8 @@ def main():
             ping_fails += 1
             if not first_offline_mark:
                 first_offline_mark = current_time
+            if not first_offline_time:
+                first_offline_time = current_time
             # if 30 min offline
             if args.enable_hibernate_offline and current_time - first_offline_mark >= 30 * 60:
                 print('hibernation activated')
