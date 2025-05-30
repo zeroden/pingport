@@ -17,6 +17,7 @@ import contextlib
 from io import StringIO
 import argparse
 import subprocess
+import datetime
 
 ping_fails = 0
 ping_fails_str = ''
@@ -340,18 +341,7 @@ def reverse_ip(ip):
     return host_rev
 
 def nice_time(time):
-    # Format based on elapsed time size
-    if time < 60:
-        return f'{time:.0f} seconds'
-    elif time < 3600:
-        minutes = time / 60
-        return f'{minutes:.0f} minutes'
-    elif time < 86400:
-        hours = time / 3600
-        return f'{hours:.0f} hours'
-    else:
-        days = time / 86400
-        return f'{days:.0f} days'
+    return str(datetime.timedelta(seconds=int(time)))
 
 def main():
     global ping_fails, args
