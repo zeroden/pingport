@@ -353,7 +353,7 @@ def main():
     parser.add_argument("--global-url1", help="Global url 1", required=True)
     parser.add_argument("--global-url2", help="Global url 2", required=True)
     parser.add_argument("--enable-yt-speed", action="store_true", help="Enable youtube speed test (optional)")
-    parser.add_argument("--enable-hibernate-offline", action="store_true", help="Hibernation of long offline (optional)")
+    parser.add_argument("--enable-hibernate", type=int, metavar="MINUTES", help="Enable hibernation after the specified number of offline minutes (optional)")
     parser.add_argument("--telegram-update", help="Send data to telegram bot (optional)")
     args = parser.parse_args()
 
@@ -474,8 +474,8 @@ def main():
                 first_offline_mark = current_time
             if not first_offline_time:
                 first_offline_time = current_time
-            # if 30 min offline
-            if args.enable_hibernate_offline and current_time - first_offline_mark >= 30 * 60:
+            # after some offline time go hibernate
+            if args.enable_hibernate and current_time - first_offline_mark >= 60 * args.enable_hibernate:
                 print('hibernation activated')
                 # reset hibernation timer
                 first_offline_mark = current_time
