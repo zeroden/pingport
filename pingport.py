@@ -35,7 +35,7 @@ def set_console_title(s):
     win32api.SetConsoleTitle('pingport: ' + s)
 
 def test_youtube_speed(video_url):
-    temp_filename = "temp_video.mp4"
+    temp_filename = 'temp_video.mp4'
     speed_pattern = re.compile(r'at (\d+\.\d+)MiB/s')
 
     ydl_opts = {
@@ -118,15 +118,15 @@ def send_telegram(text):
     try:
         max_length = 4096
         if len(text) > max_length:
-            text = text[:max_length - 3] + "..."  # Add ellipsis to indicate truncation
-        bot_token, bot_chat_id = args.telegram_update.split(";")
-        api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True, "parse_mode": "HTML"}
+            text = text[:max_length - 3] + '...'  # Add ellipsis to indicate truncation
+        bot_token, bot_chat_id = args.telegram_update.split(';')
+        api_url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
+        data = {'chat_id': bot_chat_id, 'text': text, 'disable_web_page_preview': True, 'parse_mode': 'HTML'}
         response = requests.post(api_url, data=data)
         if not response.ok:
-            print(get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f"Telegram error: {response.status_code} - {response.text}")
+            print(get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f'Telegram error: {response.status_code} - {response.text}')
     except Exception as e:
-        msg = get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f"Error sending Telegram message: {e}"
+        msg = get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f'Error sending Telegram message: {e}'
         print(msg)
 
 def show_download_speed(msg = ''):
@@ -224,7 +224,7 @@ def get_win_uptime():
      
     # formatting the time in readable form
     # (format = x days, HH:MM:SS)
-    return f"{days} days, {hour:02}:{mins:02}:{sec:02}"
+    return f'{days} days, {hour:02}:{mins:02}:{sec:02}'
 
 def dupe_console_to_file(filepath):
     class Logger(object):
@@ -289,7 +289,7 @@ def custom_sleep(i):
 
 def ping_host(host):
     try:
-        output = subprocess.check_output(["ping", "-n", "1", host], stderr=subprocess.STDOUT, universal_newlines=True)
+        output = subprocess.check_output(['ping', '-n', '1', host], stderr=subprocess.STDOUT, universal_newlines=True)
         # Extract the time in ms using regular expressions
         time_match = re.search(r'time[=<](\d+)', output)
         if time_match:
@@ -347,14 +347,14 @@ def main():
     global ping_fails, args
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host-to-ping", help="Host for ping", required=True)
-    parser.add_argument("--local-url1", help="Local url 1", required=True)
-    parser.add_argument("--local-url2", help="Local url 2", required=True)
-    parser.add_argument("--global-url1", help="Global url 1", required=True)
-    parser.add_argument("--global-url2", help="Global url 2", required=True)
-    parser.add_argument("--enable-yt-speed", action="store_true", help="Enable youtube speed test (optional)")
-    parser.add_argument("--enable-hibernate", type=int, metavar="MINUTES", help="Enable hibernation after the specified number of offline minutes (optional)")
-    parser.add_argument("--telegram-update", help="Send data to telegram bot (optional)")
+    parser.add_argument('--host-to-ping', help='Host for ping', required=True)
+    parser.add_argument('--local-url1', help='Local url 1', required=True)
+    parser.add_argument('--local-url2', help='Local url 2', required=True)
+    parser.add_argument('--global-url1', help='Global url 1', required=True)
+    parser.add_argument('--global-url2', help='Global url 2', required=True)
+    parser.add_argument('--enable-yt-speed', action='store_true', help='Enable youtube speed test (optional)')
+    parser.add_argument('--enable-hibernate', type=int, metavar='MINUTES', help='Enable hibernation after the specified number of offline minutes (optional)')
+    parser.add_argument('--telegram-update', help='Send data to telegram bot (optional)')
     args = parser.parse_args()
 
     logfilename = get_timestamp('pingport_%Y%m%d_%H%M%S.log')
@@ -377,7 +377,7 @@ def main():
         print('host to ping ip: "%s"' % host_to_ping_ip)
         print('host to ping ip reverse: "%s"' % reverse_ip(host_to_ping_ip))
     except Exception as e:
-        print(f"host to ping ip: failed - {str(e)}")
+        print(f'host to ping ip: failed - {str(e)}')
     loc_ip = socket.gethostbyname(socket.getfqdn())
     print('local ip: "%s"' % loc_ip)
     print('local ip reverse: "{}"'.format(reverse_ip(loc_ip)))
@@ -392,7 +392,7 @@ def main():
                 rec = reader.get(wan_ip)
                 print('isp: "%s"' % rec['autonomous_system_organization'])
     except Exception as e:
-        print(f"wan ip: failed - {str(e)}")
+        print(f'wan ip: failed - {str(e)}')
     show_download_speed()
     print('Press F1 for a manual ping, F2 for manual speed test\n')
 
@@ -490,5 +490,5 @@ def main():
         # next good ping timeout
         custom_sleep(60)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
