@@ -106,10 +106,11 @@ def test_download_speed(url):
 
     return down_speed_byte * 8
 
-def get_timestamp(fmt = '%Y-%m-%d %H:%M:%S'):
-    return time.strftime(fmt)
+def get_nice_timestamp(fmt='%Y-%m-%d %H:%M:%S', t=None):
+    t = time.localtime(t)  # use current local time to convert float timestamp to struct_time
+    return time.strftime(fmt, t)
 
-def send_telegram(text):
+def send_telegram(text, parse_mode=None):
     global args
 
     if not args.telegram_update:
@@ -123,12 +124,14 @@ def send_telegram(text):
 
         bot_token, bot_chat_id = args.telegram_update.split(';')
         api_url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
-        data = {'chat_id': bot_chat_id, 'text': text, 'disable_web_page_preview': True, 'parse_mode': 'MarkdownV2'}
+        data = {'chat_id': bot_chat_id, 'text': text, 'disable_web_page_preview': True}
+        if parse_mode:
+            data['parse_mode'] = parse_mode
         response = requests.post(api_url, data=data)
         if not response.ok:
-            print(get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f'Telegram error: {response.status_code} - {response.text}')
+            print(f'[{get_nice_timestamp()}] ,' + f'Telegram error: {response.status_code} - {response.text}')
     except Exception as e:
-        msg = get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f'Error sending Telegram message: {e}'
+        msg = f'[{get_nice_timestamp()}] ,' + f'Error sending Telegram message: {e}'
         print(msg)
 
 def show_download_speed(msg = ''):
@@ -176,7 +179,7 @@ def show_download_speed(msg = ''):
     if down_speed_3_4:
         print(', loc ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + 'mbit', end='')
 
-    timedate_stamp = get_timestamp()
+    timedate_stamp = get_nice_timestamp()
     tg_msg = f'ping {ping}ms ▒ glob {down_speed_1_2}mbit ▒ loc {down_speed_3_4}mbit'
 
     down_speed_5 = 0
@@ -195,7 +198,7 @@ def show_download_speed(msg = ''):
     print('')
 
     # send monospace
-    send_telegram('`' + tg_msg + '`')
+    send_telegram('`' + tg_msg + '`', parse_mode='MarkdownV2')
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
@@ -286,7 +289,7 @@ def custom_sleep(i):
                     j = 0
                 # manual speed test
                 elif keyboard.is_pressed('f2'):
-                    timedate_stamp = get_timestamp()
+                    timedate_stamp = get_nice_timestamp()
                     msg = last_newline_inverted + f'[{timedate_stamp}] manual'
                     show_download_speed(msg)
 
@@ -304,7 +307,7 @@ def ping_host(host):
         return -1  # General failure
 
 def show_ping(host):
-    timedate_stamp = get_timestamp()
+    timedate_stamp = get_nice_timestamp()
     # ping using classical ping
     ret_ping = ping_host(host)
     # make second ping try
@@ -343,7 +346,7 @@ def reverse_ip(ip):
         host_rev = err
     return host_rev
 
-def nice_time(time):
+def nice_duration(time):
     return str(datetime.timedelta(seconds=int(time)))
 
 def main():
@@ -360,9 +363,9 @@ def main():
     parser.add_argument('--telegram-update', help='Send data to telegram bot (optional)')
     args = parser.parse_args()
 
-    logfilename = get_timestamp('pingport_%Y%m%d_%H%M%S.log')
+    logfilename = get_nice_timestamp('pingport_%Y%m%d_%H%M%S.log')
     dupe_console_to_file(logfilename)
-    timedate_stamp = get_timestamp('[%Y-%m-%d %H:%M:%S]')
+    timedate_stamp = get_nice_timestamp('[%Y-%m-%d %H:%M:%S]')
     init(convert=True, autoreset=True)
 
     start_msg = timedate_stamp + ' pingport started'
@@ -409,7 +412,7 @@ def main():
     day_count = 0
 
     while True:
-        timedate_stamp = get_timestamp('[%Y-%m-%d %H:%M:%S]')
+        timedate_stamp = get_nice_timestamp('[%Y-%m-%d %H:%M:%S]')
         current_time = time.time()
 
         # Check if 60 minutes have passed
@@ -457,9 +460,10 @@ def main():
             ping_day_ok += 1
             hiber_mark = 0
             if first_offline_time:
-                offline_time_raw = current_time - first_offline_time
-                offline_time_nice = nice_time(offline_time_raw)
-                offline_msg = f'{timedate_stamp} back online, downtime lasted {offline_time_nice}'
+                offline_msg = f'[{get_nice_timestamp(t=first_offline_time)}] offline\n'
+                offline_time_dur_raw = current_time - first_offline_time
+                offline_time_dur_nice = nice_duration(offline_time_dur_raw)
+                offline_msg += f'{timedate_stamp} back online, downtime lasted {offline_time_dur_nice}'
                 print('\n' + offline_msg)
                 send_telegram(offline_msg)
                 # reset offline period
