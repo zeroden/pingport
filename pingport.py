@@ -398,13 +398,12 @@ def main():
 
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
-    first_offline_mark = 0
+    hiber_mark = 0
     first_offline_time = 0
     ping_day_attempts = 0
     ping_day_ok = 0
     hour_count = 0
     day_count = 0
-    telegram_message = ''
 
     while True:
         timedate_stamp = get_timestamp('[%Y-%m-%d %H:%M:%S]')
@@ -453,32 +452,27 @@ def main():
         # ping ok
         if result:
             ping_day_ok += 1
-            first_offline_mark = 0
-            offline_msg = ''
+            hiber_mark = 0
             if first_offline_time:
                 offline_time_raw = current_time - first_offline_time
                 offline_time_nice = nice_time(offline_time_raw)
                 offline_msg = f'{timedate_stamp} back online, downtime lasted {offline_time_nice}'
-                print(offline_msg)
+                print('\n' + offline_msg)
+                send_telegram(offline_msg)
+                # reset offline period
                 first_offline_time = 0
-            if telegram_message:
-                if offline_msg:
-                    telegram_message += '\n' + offline_msg
-                send_telegram(telegram_message)
-                telegram_message = ''
         # in case of ping fail check if hiberanation needed
         else:
-            telegram_message += f'{timedate_stamp} ping fail\n'
             ping_fails += 1
-            if not first_offline_mark:
-                first_offline_mark = current_time
+            if not hiber_mark:
+                hiber_mark = current_time
             if not first_offline_time:
                 first_offline_time = current_time
             # after some offline time go hibernate
-            if args.enable_hibernate and current_time - first_offline_mark >= 60 * args.enable_hibernate:
+            if args.enable_hibernate and current_time - hiber_mark >= 60 * args.enable_hibernate:
                 print('hibernation activated')
-                # reset hibernation timer
-                first_offline_mark = current_time
+                # reset hibernation marker
+                hiber_mark = current_time
                 # Command to open a new cmd window, wait, then hibernate
                 cmd = f'start cmd /k "echo delayed hibernation & timeout /t 300 && shutdown /h"'
                 subprocess.Popen(cmd, shell=True)
