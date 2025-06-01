@@ -116,12 +116,14 @@ def send_telegram(text):
         return
 
     try:
+        # truncated if too long
         max_length = 4096
         if len(text) > max_length:
             text = text[:max_length - 3] + '...'  # Add ellipsis to indicate truncation
+
         bot_token, bot_chat_id = args.telegram_update.split(';')
         api_url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
-        data = {'chat_id': bot_chat_id, 'text': text, 'disable_web_page_preview': True, 'parse_mode': 'HTML'}
+        data = {'chat_id': bot_chat_id, 'text': text, 'disable_web_page_preview': True, 'parse_mode': 'MarkdownV2'}
         response = requests.post(api_url, data=data)
         if not response.ok:
             print(get_timestamp('[%Y-%m-%d %H:%M:%S], ') + f'Telegram error: {response.status_code} - {response.text}')
@@ -175,7 +177,7 @@ def show_download_speed(msg = ''):
         print(', loc ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + 'mbit', end='')
 
     timedate_stamp = get_timestamp()
-    tg_msg = f'ping <b>{ping}</b>ms ▒ glob <b>{down_speed_1_2}</b>mbit ▒ loc <b>{down_speed_3_4}</b>mbit'
+    tg_msg = f'ping {ping}ms ▒ glob {down_speed_1_2}mbit ▒ loc {down_speed_3_4}mbit'
 
     down_speed_5 = 0
     if args.enable_yt_speed:
@@ -192,7 +194,8 @@ def show_download_speed(msg = ''):
     # print newline to done with speed output
     print('')
 
-    send_telegram(tg_msg)
+    # send monospace
+    send_telegram('`' + tg_msg + '`')
 
     speed_file = 'speed.csv'
     # if speed file not exist create header in it
@@ -436,9 +439,9 @@ def main():
             day_msg = timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
             print(last_newline_inverted + Style.BRIGHT + day_msg)
             send_telegram(day_msg)
-            day_msg = 'windows uptime: "%s"' % get_win_uptime()
-            print(day_msg)
-            send_telegram(day_msg)
+            up_msg = 'windows uptime: "%s"' % get_win_uptime()
+            print(up_msg)
+            send_telegram(up_msg)
 
             # empty string between days
             print('')
