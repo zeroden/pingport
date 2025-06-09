@@ -359,8 +359,9 @@ def main():
     parser.add_argument('--global-url1', help='Global url 1', required=True)
     parser.add_argument('--global-url2', help='Global url 2', required=True)
     parser.add_argument('--enable-yt-speed', action='store_true', help='Enable youtube speed test (optional)')
-    parser.add_argument('--enable-hibernate', type=int, metavar='MINUTES', help='Enable hibernation after the specified number of offline minutes (optional)')
     parser.add_argument('--telegram-update', help='Send data to telegram bot (optional)')
+    parser.add_argument('--offline-short-cmd', help='Run command on short offline time (optional)')
+    parser.add_argument('--offline-long-cmd', help='Run command on long offline time (optional)')
     args = parser.parse_args()
 
     logfilename = get_nice_timestamp('pingport_%Y%m%d_%H%M%S.log')
@@ -404,7 +405,8 @@ def main():
 
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
-    hiber_mark = 0
+    offline_short_cmd_mark = time.time()
+    offline_long_cmd_mark = time.time()
     first_offline_time = 0
     ping_day_attempts = 0
     ping_day_ok = 0
@@ -458,7 +460,8 @@ def main():
         # ping ok
         if result:
             ping_day_ok += 1
-            hiber_mark = 0
+            offline_short_cmd_mark = time.time()
+            offline_long_cmd_mark = time.time()
             if first_offline_time:
                 offline_msg = f'[{get_nice_timestamp(t=first_offline_time)}] offline\n'
                 offline_time_dur_raw = current_time - first_offline_time
@@ -468,21 +471,25 @@ def main():
                 send_telegram(offline_msg)
                 # reset offline period
                 first_offline_time = 0
-        # in case of ping fail check if hiberanation needed
+        # in case of ping fail check if offline command needed
         else:
             ping_fails += 1
-            if not hiber_mark:
-                hiber_mark = current_time
             if not first_offline_time:
                 first_offline_time = current_time
-            # after some offline time go hibernate
-            if args.enable_hibernate and current_time - hiber_mark >= 60 * args.enable_hibernate:
-                print('hibernation activated')
-                # reset hibernation marker
-                hiber_mark = current_time
-                # Command to open a new cmd window, wait, then hibernate
-                cmd = f'start cmd /k "echo delayed hibernation & timeout /t 300 && shutdown /h"'
-                subprocess.Popen(cmd, shell=True)
+
+            # after some offline time exec cmds
+            if args.offline_short_cmd and current_time - offline_short_cmd_mark >= 300:
+                print(f'short offline command activated [{args.offline_short_cmd}]')
+                # reset offline marker to not exec cmd again
+                offline_short_cmd_mark = current_time
+                # exec cmd
+                subprocess.Popen(args.offline_short_cmd, shell=True)
+            if args.offline_long_cmd and current_time - offline_long_cmd_mark >= 3600:
+                print(f'long offline command activated [{args.offline_long_cmd}]')
+                # reset offline marker to not exec cmd again
+                offline_long_cmd_mark = current_time
+                # exec cmd
+                subprocess.Popen(args.offline_long_cmd, shell=True)
 
             # if ping failed don't wait long time for next try
             custom_sleep(10)
