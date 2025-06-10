@@ -405,8 +405,8 @@ def main():
 
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
-    offline_short_cmd_mark = time.time()
-    offline_long_cmd_mark = time.time()
+    offline_short_cmd_executed = False
+    offline_long_cmd_executed = False
     first_offline_time = 0
     ping_day_attempts = 0
     ping_day_ok = 0
@@ -460,43 +460,46 @@ def main():
         # ping ok
         if result:
             ping_day_ok += 1
-            offline_short_cmd_mark = time.time()
-            offline_long_cmd_mark = time.time()
             if first_offline_time:
                 offline_msg = f'[{get_nice_timestamp(t=first_offline_time)}] offline\n'
                 offline_time_dur_raw = current_time - first_offline_time
+                # reset offline period
+                first_offline_time = 0
+                # reset offline commands
+                offline_short_cmd_executed = False
+                offline_long_cmd_executed = False
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
                 offline_msg += f'{timedate_stamp} back online, downtime lasted {offline_time_dur_nice}'
                 print('\n' + offline_msg)
                 send_telegram(offline_msg)
-                # reset offline period
-                first_offline_time = 0
         # in case of ping fail check if offline command needed
         else:
             ping_fails += 1
+
+            # we now offline so init first offline time
             if not first_offline_time:
                 first_offline_time = current_time
 
             # after some offline time exec cmds
-            if args.offline_short_cmd and current_time - offline_short_cmd_mark >= 300:
+            if args.offline_short_cmd and not offline_short_cmd_executed and current_time - first_offline_time >= 300:
                 print(f'short offline command activated [{args.offline_short_cmd}]')
-                # reset offline marker to not exec cmd again
-                offline_short_cmd_mark = current_time
+                # exec cmd only once for each offline period
+                offline_short_cmd_executed = True
                 # exec cmd
                 subprocess.Popen(args.offline_short_cmd, shell=True)
-            if args.offline_long_cmd and current_time - offline_long_cmd_mark >= 3600:
+            if args.offline_long_cmd and not offline_long_cmd_executed and current_time - first_offline_time >= 3600:
                 print(f'long offline command activated [{args.offline_long_cmd}]')
-                # reset offline marker to not exec cmd again
-                offline_long_cmd_mark = current_time
+                # exec cmd only once for each offline period
+                offline_long_cmd_executed = True
                 # exec cmd
                 subprocess.Popen(args.offline_long_cmd, shell=True)
 
             # if ping failed don't wait long time for next try
-            custom_sleep(10)
+            custom_sleep(30)
             continue
 
         # next good ping timeout
-        custom_sleep(60)
+        custom_sleep(120)
 
 if __name__ == '__main__':
     main()
