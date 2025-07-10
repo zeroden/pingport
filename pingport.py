@@ -362,6 +362,8 @@ def main():
     parser.add_argument('--telegram-update', help='Send data to telegram bot (optional)')
     parser.add_argument('--offline-short-cmd', help='Run command on short offline time (optional)')
     parser.add_argument('--offline-long-cmd', help='Run command on long offline time (optional)')
+    parser.add_argument('--offline-short-timeout', type=int, default=300, help='Short offline command timeout in seconds (optional)')
+    parser.add_argument('--offline-long-timeout', type=int, default=3600, help='Long offline command timeout in seconds (optional)')
     args = parser.parse_args()
 
     logfilename = get_nice_timestamp('pingport_%Y%m%d_%H%M%S.log')
@@ -400,6 +402,12 @@ def main():
                 print('isp: "%s"' % rec['autonomous_system_organization'])
     except Exception as e:
         print(f'wan ip: failed - {str(e)}')
+    if args.offline_short_cmd:
+        print(f'offline short command: [{args.offline_short_cmd}]')
+        print(f'offline short timeout: {args.offline_short_timeout}')
+    if args.offline_long_cmd:
+        print(f'offline long command: [{args.offline_long_cmd}]')
+        print(f'offline long timeout: {args.offline_long_timeout}')
     show_download_speed()
     print('Press F1 for a manual ping, F2 for manual speed test\n')
 
@@ -481,13 +489,13 @@ def main():
                 first_offline_time = current_time
 
             # after some offline time exec cmds
-            if args.offline_short_cmd and not offline_short_cmd_executed and current_time - first_offline_time >= 300:
+            if args.offline_short_cmd and not offline_short_cmd_executed and current_time - first_offline_time >= args.offline_short_timeout:
                 print(f'short offline command activated [{args.offline_short_cmd}]')
                 # exec cmd only once for each offline period
                 offline_short_cmd_executed = True
                 # exec cmd
                 subprocess.Popen(args.offline_short_cmd, shell=True)
-            if args.offline_long_cmd and not offline_long_cmd_executed and current_time - first_offline_time >= 3600:
+            if args.offline_long_cmd and not offline_long_cmd_executed and current_time - first_offline_time >= args.offline_long_timeout:
                 print(f'long offline command activated [{args.offline_long_cmd}]')
                 # exec cmd only once for each offline period
                 offline_long_cmd_executed = True
