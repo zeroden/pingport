@@ -93,7 +93,7 @@ def test_download_speed(url):
                 dl += len(chunk)
                 data.extend(chunk)
     except Exception as e:
-        print('test_download_speed.requests.get() failed [%s]' % e)
+        print('test_download_speed.requests.get(%s) failed [%s]' % (url, e))
         return 0
 
     end_time = time.time()
@@ -159,10 +159,12 @@ def show_download_speed(msg = ''):
     if not down_speed_1:
         print(last_newline_inverted + 'test_download_speed(url_1) failed')
     down_speed_1 = round(down_speed_1 / 1_000_000, 1)
-    down_speed_2 = test_download_speed(url_2)
-    if not down_speed_2:
-        print(last_newline_inverted + 'test_download_speed(url_2) failed')
-    down_speed_2 = round(down_speed_2 / 1_000_000, 1)
+    down_speed_2 = 0
+    if url_2:
+        down_speed_2 = test_download_speed(url_2)
+        if not down_speed_2:
+            print(last_newline_inverted + 'test_download_speed(url_2) failed')
+        down_speed_2 = round(down_speed_2 / 1_000_000, 1)
     down_speed_1_2 = max(down_speed_1, down_speed_2)
     if down_speed_1_2:
         print(', glob ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + 'mbit', end='')
@@ -171,10 +173,12 @@ def show_download_speed(msg = ''):
     if not down_speed_3:
         print(last_newline_inverted + 'test_download_speed(url_3) failed')
     down_speed_3 = round(down_speed_3 / 1_000_000, 1)
-    down_speed_4 = test_download_speed(url_4)
-    if not down_speed_4:
-        print(last_newline_inverted + 'test_download_speed(url_4) failed')
-    down_speed_4 = round(down_speed_4 / 1_000_000, 1)
+    down_speed_4 = 0
+    if url_4:
+        down_speed_4 = test_download_speed(url_4)
+        if not down_speed_4:
+            print(last_newline_inverted + 'test_download_speed(url_4) failed')
+        down_speed_4 = round(down_speed_4 / 1_000_000, 1)
     down_speed_3_4 = max(down_speed_3, down_speed_4)
     if down_speed_3_4:
         print(', loc ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + 'mbit', end='')
@@ -354,10 +358,10 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--host-to-ping', help='Host for ping', required=True)
-    parser.add_argument('--local-url1', help='Local url 1', required=True)
-    parser.add_argument('--local-url2', help='Local url 2', required=True)
-    parser.add_argument('--global-url1', help='Global url 1', required=True)
-    parser.add_argument('--global-url2', help='Global url 2', required=True)
+    parser.add_argument('--local-url1', required=True, help='Local speed test URL')
+    parser.add_argument('--local-url2', help='Local speed test URL 2 (optional)')
+    parser.add_argument('--global-url1', required=True, help='Global speed test URL')
+    parser.add_argument('--global-url2', help='Global speed test URL 2 (optional)')
     parser.add_argument('--enable-yt-speed', action='store_true', help='Enable youtube speed test (optional)')
     parser.add_argument('--telegram-update', help='Send data to telegram bot (optional)')
     parser.add_argument('--offline-short-cmd', help='Run command on short offline time (optional)')
