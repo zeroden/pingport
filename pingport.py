@@ -435,7 +435,7 @@ def main():
             last_60min_mark = current_time
             hour_count += 1
             if hours_passed >= 2:
-                hours_msg = '+%d hours slept' % hours_passed
+                hours_msg = '+%d hours slept\n\n\n' % hours_passed
                 print(last_newline_inverted + Style.BRIGHT + hours_msg)
                 send_telegram(hours_msg)
                 # wait some time after unsleep to allow network up
@@ -457,7 +457,7 @@ def main():
             print(last_newline_inverted + Style.BRIGHT + day_msg)
             send_telegram(day_msg)
             up_msg = 'windows uptime: "%s"' % get_win_uptime()
-            print(up_msg)
+            print(up_msg, end='')
             send_telegram(up_msg)
 
             # empty string between days
