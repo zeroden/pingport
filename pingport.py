@@ -372,11 +372,13 @@ def show_ping(host):
     return ret_ping >= 0 and ret_sock == 0
 
 def reverse_ip(ip):
+    # try reverse lookup
     try:
-        host_rev = socket.gethostbyaddr(ip)[0]
-    except (socket.herror) as err:
-        host_rev = err
-    return host_rev
+        hostname = socket.gethostbyaddr(ip)[0]
+    except socket.herror:
+        # fallback: get fqdn of local ip
+        hostname = socket.getfqdn()
+    return hostname
 
 def nice_duration(time):
     return str(datetime.timedelta(seconds=int(time)))
@@ -394,6 +396,18 @@ def GetCommandLine():
         cmdline = " ".join(sys.argv)
 
     return cmdline
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # use a public IP, Google DNS for example, port doesn't matter
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
 
 def main():
     global ping_fails, args
@@ -435,7 +449,7 @@ def main():
         print("host to ping ip reverse: \"%s\"" % reverse_ip(host_to_ping_ip))
     except Exception as e:
         print(f"host to ping ip: failed - {str(e)}")
-    loc_ip = socket.gethostbyname(socket.getfqdn())
+    loc_ip = get_local_ip()
     print("local ip: \"%s\"" % loc_ip)
     print("local ip reverse: \"{}\"".format(reverse_ip(loc_ip)))
     print("local name: \"%s\"" % socket.getfqdn())
