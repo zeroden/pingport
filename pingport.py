@@ -1,9 +1,22 @@
 import socket
 import time
 import sys
-import win32api
-import keyboard
-from colorama import init, Fore, Style
+import platform
+if platform.system() == "Windows":
+    import win32api
+    import keyboard
+    from colorama import init, Fore, Style
+    init(convert=True, autoreset=True)
+else:
+    # linux
+    class Style:
+        BRIGHT = ''
+        RESET_ALL = ''
+    class Fore:
+        YELLOW = ''  # yellow
+        GREEN  = ''  # green
+        RED    = ''  # red
+        CYAN   = ''  # cyan
 import ctypes
 import subprocess
 import re
@@ -24,15 +37,17 @@ ping_fails_str = ''
 last_newline_inverted = ''
 args = None
 
-# Get the handle of the current console window
-console_window_handle = ctypes.windll.kernel32.GetConsoleWindow()
+if platform.system() == "Windows":
+    # Get the handle of the current console window
+    console_window_handle = ctypes.windll.kernel32.GetConsoleWindow()
 
 def get_active_window_handle():
     # Get the handle of the currently active window
     return ctypes.windll.user32.GetForegroundWindow()
 
 def set_console_title(s):
-    win32api.SetConsoleTitle('pingport: ' + s)
+    if platform.system() == "Windows":
+        win32api.SetConsoleTitle('pingport: ' + s)
 
 def test_youtube_speed(video_url):
     temp_filename = 'temp_video.mp4'
@@ -212,29 +227,37 @@ def show_download_speed(msg = ''):
     with open(speed_file, 'a') as myfile:
         myfile.write(f'{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n')
 
-def get_win_uptime(): 
-    # getting the library in which GetTickCount64() resides
-    lib = ctypes.windll.kernel32
+def get_uptime():
+    if platform.system() == "Windows":
+        # use Windows API
+        # getting the library in which GetTickCount64() resides
+        lib = ctypes.windll.kernel32
+        # Set the return type to match the expected unsigned 64-bit integer (no negatives values)
+        lib.GetTickCount64.restype = ctypes.c_ulonglong
+        # calling the function and storing the return value
+        t = lib.GetTickCount64()  # milliseconds
+        # since the time is in milliseconds i.e. 1000 * seconds
+        # therefore truncating the value
+        t = int(str(t)[:-3])
+    else:
+        # Linux: read /proc/uptime
+        try:
+            with open("/proc/uptime", "r") as f:
+                t = float(f.readline().split()[0])  # seconds
+                t = int(t)
+        except Exception:
+            return "uptime unavailable"
 
-    # Set the return type to match the expected unsigned 64-bit integer (no negatives values)
-    lib.GetTickCount64.restype = ctypes.c_ulonglong
-
-    # calling the function and storing the return value
-    t = lib.GetTickCount64()
-     
-    # since the time is in milliseconds i.e. 1000 * seconds
-    # therefore truncating the value
-    t = int(str(t)[:-3])
-     
+    # convert seconds to days, hours, minutes, seconds
     # extracting hours, minutes, seconds & days from t
     # variable (which stores total time in seconds)
     mins, sec = divmod(t, 60)
     hour, mins = divmod(mins, 60)
     days, hour = divmod(hour, 24)
-     
+
     # formatting the time in readable form
     # (format = x days, HH:MM:SS)
-    return f'{days} days, {hour:02}:{mins:02}:{sec:02}'
+    return f"{days} days, {hour:02}:{mins:02}:{sec:02}"
 
 def dupe_console_to_file(filepath):
     class Logger(object):
@@ -248,7 +271,7 @@ def dupe_console_to_file(filepath):
             self.logfile.write(message.encode())
             self.logfile.flush()
             global last_newline_inverted
-            if message[-1] == '\n':
+            if message and message[-1] == '\n':
                 last_newline_inverted = ''
             else:
                 last_newline_inverted = '\n'
@@ -285,21 +308,26 @@ def custom_sleep(i):
         while j:
             j = j - 1
             time.sleep(0.1)
-            if get_active_window_handle() == console_window_handle:
-                # manual ping
-                if keyboard.is_pressed('f1'):
-                    print('m', end='')
-                    i = 0
-                    j = 0
-                # manual speed test
-                elif keyboard.is_pressed('f2'):
-                    timedate_stamp = get_nice_timestamp()
-                    msg = last_newline_inverted + f'[{timedate_stamp}] manual'
-                    show_download_speed(msg)
+            if platform.system() == "Windows":
+                if get_active_window_handle() == console_window_handle:
+                    # manual ping
+                    if keyboard.is_pressed('f1'):
+                        print('m', end='')
+                        i = 0
+                        j = 0
+                    # manual speed test
+                    elif keyboard.is_pressed('f2'):
+                        timedate_stamp = get_nice_timestamp()
+                        msg = last_newline_inverted + f'[{timedate_stamp}] manual'
+                        show_download_speed(msg)
 
 def ping_host(host):
     try:
-        output = subprocess.check_output(['ping', '-n', '1', host], stderr=subprocess.STDOUT, universal_newlines=True)
+        if platform.system() == "Windows":
+            cmd = ['ping', '-n', '1', host]
+        else:
+            cmd = ['ping', '-c', '1', host]
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
         # Extract the time in ms using regular expressions
         time_match = re.search(r'time[=<](\d+)', output)
         if time_match:
@@ -353,6 +381,20 @@ def reverse_ip(ip):
 def nice_duration(time):
     return str(datetime.timedelta(seconds=int(time)))
 
+def GetCommandLine():
+    if platform.system() == "Windows":
+        try:
+            import win32api
+            cmdline = win32api.GetCommandLine()
+        except ImportError:
+            # fallback if win32api not installed
+            cmdline = ' '.join(sys.argv)
+    else:
+        # Linux
+        cmdline = ' '.join(sys.argv)
+
+    return cmdline
+
 def main():
     global ping_fails, args
 
@@ -373,17 +415,19 @@ def main():
     logfilename = get_nice_timestamp('pingport_%Y%m%d_%H%M%S.log')
     dupe_console_to_file(logfilename)
     timedate_stamp = get_nice_timestamp('[%Y-%m-%d %H:%M:%S]')
-    init(convert=True, autoreset=True)
-
-    start_msg = timedate_stamp + ' pingport started'
+    start_msg = timedate_stamp
+    if platform.system() == "Windows":
+        start_msg = start_msg + ' pingport win started'
+    else:
+        start_msg = start_msg + ' pingport lin started'
     print(Style.BRIGHT + Fore.CYAN + start_msg)
     send_telegram(start_msg)
 
     print('python version: "%s"' % sys.version)
     print('python path: "%s"' % sys.executable)
-    print('cmdl: <%s>' % win32api.GetCommandLine())
+    print('cmdl: <%s>' % GetCommandLine())
     print('log: "%s"' % logfilename)
-    print('windows uptime: "%s"' % get_win_uptime())
+    print('system uptime: "%s"' % get_uptime())
     print('host to ping: "%s"' % args.host_to_ping)
     try:
         host_to_ping_ip = socket.gethostbyname(args.host_to_ping)
@@ -396,7 +440,7 @@ def main():
     print('local ip reverse: "{}"'.format(reverse_ip(loc_ip)))
     print('local name: "%s"' % socket.getfqdn())
     try:
-        wan_ip = get('https://api.ipify.org').content.decode('utf8')
+        wan_ip = get("https://api.ipify.org").content.decode("utf8")
         print('wan ip: "{}"'.format(wan_ip))
         print('wan ip reverse: "{}"'.format(reverse_ip(wan_ip)))
         ip2isp_fn = 'dbip-asn-lite-2024-07.mmdb'
@@ -413,7 +457,8 @@ def main():
         print(f'offline long command: [{args.offline_long_cmd}]')
         print(f'offline long timeout: {args.offline_long_timeout}')
     show_download_speed()
-    print('Press F1 for a manual ping, F2 for manual speed test\n')
+    if platform.system() == "Windows":
+        print('Press F1 for a manual ping, F2 for manual speed test\n')
 
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
@@ -456,7 +501,7 @@ def main():
             day_msg = timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
             print(last_newline_inverted + Style.BRIGHT + day_msg)
             send_telegram(day_msg)
-            up_msg = 'windows uptime: "%s"' % get_win_uptime()
+            up_msg = 'system uptime: "%s"' % get_uptime()
             print(up_msg, end='')
             send_telegram(up_msg)
 
