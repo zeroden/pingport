@@ -10,13 +10,13 @@ if platform.system() == "Windows":
 else:
     # linux
     class Style:
-        BRIGHT = ''
-        RESET_ALL = ''
+        BRIGHT = ""
+        RESET_ALL = ""
     class Fore:
-        YELLOW = ''  # yellow
-        GREEN  = ''  # green
-        RED    = ''  # red
-        CYAN   = ''  # cyan
+        YELLOW = ""  # yellow
+        GREEN  = ""  # green
+        RED    = ""  # red
+        CYAN   = ""  # cyan
 import ctypes
 import subprocess
 import re
@@ -33,8 +33,8 @@ import subprocess
 import datetime
 
 ping_fails = 0
-ping_fails_str = ''
-last_newline_inverted = ''
+ping_fails_str = ""
+last_newline_inverted = ""
 args = None
 
 if platform.system() == "Windows":
@@ -47,18 +47,18 @@ def get_active_window_handle():
 
 def set_console_title(s):
     if platform.system() == "Windows":
-        win32api.SetConsoleTitle('pingport: ' + s)
+        win32api.SetConsoleTitle("pingport: " + s)
 
 def test_youtube_speed(video_url):
-    temp_filename = 'temp_video.mp4'
-    speed_pattern = re.compile(r'at (\d+\.\d+)MiB/s')
+    temp_filename = "temp_video.mp4"
+    speed_pattern = re.compile(r"at (\d+\.\d+)MiB/s")
 
     ydl_opts = {
-        'format': '135', # 135 mp4   854x480     25    │    8.28MiB  328k https │ avc1.4D401E    328k video only          480p, mp4_dash
-        'noplaylist': True,
-        'quiet': False,  # Set to False to capture log messages
-        'outtmpl': temp_filename,
-        'force_generic_extractor': True,
+        "format": "135", # 135 mp4   854x480     25    │    8.28MiB  328k https │ avc1.4D401E    328k video only          480p, mp4_dash
+        "noplaylist": True,
+        "quiet": False,  # Set to False to capture log messages
+        "outtmpl": temp_filename,
+        "force_generic_extractor": True,
     }
 
     # Remove the temp file if it exists
@@ -72,7 +72,7 @@ def test_youtube_speed(video_url):
             try:
                 ydl.download([video_url])
             except Exception as e:
-                print('ydl.download() failed [%s]' % e)
+                print("ydl.download() failed [%s]" % e)
                 return 0
 
     # Parse and extract speed from the log output
@@ -92,12 +92,12 @@ def test_youtube_speed(video_url):
 
 def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
-    url = url + '?x=%s' % anti_cache_stamp
+    url = url + "?x=%s" % anti_cache_stamp
 
     start_time = time.time()
     try:
         response = requests.get(url, stream=True)
-        total_length = response.headers.get('content-length')
+        total_length = response.headers.get("content-length")
         if total_length is None:
             data = response.content
         else:
@@ -108,7 +108,7 @@ def test_download_speed(url):
                 dl += len(chunk)
                 data.extend(chunk)
     except Exception as e:
-        print('test_download_speed.requests.get(%s) failed [%s]' % (url, e))
+        print("test_download_speed.requests.get(%s) failed [%s]" % (url, e))
         return 0
 
     end_time = time.time()
@@ -121,7 +121,7 @@ def test_download_speed(url):
 
     return down_speed_byte * 8
 
-def get_nice_timestamp(fmt='%Y-%m-%d %H:%M:%S', t=None):
+def get_nice_timestamp(fmt="%Y-%m-%d %H:%M:%S", t=None):
     t = time.localtime(t)  # use current local time to convert float timestamp to struct_time
     return time.strftime(fmt, t)
 
@@ -135,35 +135,35 @@ def send_telegram(text, parse_mode=None):
         # truncated if too long
         max_length = 4096
         if len(text) > max_length:
-            text = text[:max_length - 3] + '...'  # Add ellipsis to indicate truncation
+            text = text[:max_length - 3] + "..."  # Add ellipsis to indicate truncation
 
-        bot_token, bot_chat_id = args.telegram_update.split(';')
-        api_url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
-        data = {'chat_id': bot_chat_id, 'text': text, 'disable_web_page_preview': True}
+        bot_token, bot_chat_id = args.telegram_update.split(";")
+        api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True}
         if parse_mode:
-            data['parse_mode'] = parse_mode
+            data["parse_mode"] = parse_mode
         response = requests.post(api_url, data=data)
         if not response.ok:
-            print(f'[{get_nice_timestamp()}] ,' + f'Telegram error: {response.status_code} - {response.text}')
+            print(f"[{get_nice_timestamp()}] ," + f"Telegram error: {response.status_code} - {response.text}")
     except Exception as e:
-        msg = f'[{get_nice_timestamp()}] ,' + f'Error sending Telegram message: {e}'
+        msg = f"[{get_nice_timestamp()}] ," + f"Error sending Telegram message: {e}"
         print(msg)
 
-def show_download_speed(msg = ''):
+def show_download_speed(msg = ""):
     global args
 
     if msg:
-        msg = '%s, speed: ' % msg
+        msg = "%s, speed: " % msg
     else:
-        msg = 'speed: '
-    print(msg, end='')
+        msg = "speed: "
+    print(msg, end="")
     
     ping = ping_host(args.host_to_ping)
     if ping < 0:
-        print('ping error')
+        print("ping error")
         return
 
-    print('ping ' + Style.BRIGHT + Fore.YELLOW + f'{ping}' + Style.RESET_ALL + 'ms', end='')
+    print("ping " + Style.BRIGHT + Fore.YELLOW + f"{ping}" + Style.RESET_ALL + "ms", end="")
 
     url_1 = args.global_url1
     url_2 = args.global_url2
@@ -172,60 +172,60 @@ def show_download_speed(msg = ''):
 
     down_speed_1 = test_download_speed(url_1)
     if not down_speed_1:
-        print(last_newline_inverted + 'test_download_speed(url_1) failed')
+        print(last_newline_inverted + "test_download_speed(url_1) failed")
     down_speed_1 = round(down_speed_1 / 1_000_000, 1)
     down_speed_2 = 0
     if url_2:
         down_speed_2 = test_download_speed(url_2)
         if not down_speed_2:
-            print(last_newline_inverted + 'test_download_speed(url_2) failed')
+            print(last_newline_inverted + "test_download_speed(url_2) failed")
         down_speed_2 = round(down_speed_2 / 1_000_000, 1)
     down_speed_1_2 = max(down_speed_1, down_speed_2)
     if down_speed_1_2:
-        print(', glob ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_1_2}' + Style.RESET_ALL + 'mbit', end='')
+        print(", glob " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_1_2}" + Style.RESET_ALL + "mbit", end="")
 
     down_speed_3 = test_download_speed(url_3)
     if not down_speed_3:
-        print(last_newline_inverted + 'test_download_speed(url_3) failed')
+        print(last_newline_inverted + "test_download_speed(url_3) failed")
     down_speed_3 = round(down_speed_3 / 1_000_000, 1)
     down_speed_4 = 0
     if url_4:
         down_speed_4 = test_download_speed(url_4)
         if not down_speed_4:
-            print(last_newline_inverted + 'test_download_speed(url_4) failed')
+            print(last_newline_inverted + "test_download_speed(url_4) failed")
         down_speed_4 = round(down_speed_4 / 1_000_000, 1)
     down_speed_3_4 = max(down_speed_3, down_speed_4)
     if down_speed_3_4:
-        print(', loc ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_3_4}' + Style.RESET_ALL + 'mbit', end='')
+        print(", loc " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
     timedate_stamp = get_nice_timestamp()
-    tg_msg = f'ping {ping}ms ▒ glob {down_speed_1_2}mbit ▒ loc {down_speed_3_4}mbit'
+    tg_msg = f"ping {ping}ms ▒ glob {down_speed_1_2}mbit ▒ loc {down_speed_3_4}mbit"
 
     down_speed_5 = 0
     if args.enable_yt_speed:
-        # {'video_title': 'Rick Astley - Never Gonna Give You Up (Official Music Video)'}
-        video_url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+        # {"video_title": "Rick Astley - Never Gonna Give You Up (Official Music Video)"}
+        video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         result = test_youtube_speed(video_url)
         down_speed_5 = round(result, 1)
         if not down_speed_5:
-            print(last_newline_inverted + 'test_youtube_speed() failed')
+            print(last_newline_inverted + "test_youtube_speed() failed")
         else:
-            print(', yt ' + Style.BRIGHT + Fore.YELLOW + f'{down_speed_5}' + Style.RESET_ALL + f'mbit', end='')
-            tg_msg += f', yt {down_speed_5}'
+            print(", yt " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_5}" + Style.RESET_ALL + f"mbit", end="")
+            tg_msg += f", yt {down_speed_5}"
 
     # print newline to done with speed output
-    print('')
+    print("")
 
     # send monospace
-    send_telegram('`' + tg_msg + '`', parse_mode='MarkdownV2')
+    send_telegram("`" + tg_msg + "`", parse_mode="MarkdownV2")
 
-    speed_file = 'speed.csv'
+    speed_file = "speed.csv"
     # if speed file not exist create header in it
     if not os.path.exists(speed_file):
-        with open(speed_file, 'a') as myfile:
-            myfile.write('DATETIME,PING,GLOB,LOC,YT\n')
-    with open(speed_file, 'a') as myfile:
-        myfile.write(f'{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n')
+        with open(speed_file, "a") as myfile:
+            myfile.write("DATETIME,PING,GLOB,LOC,YT\n")
+    with open(speed_file, "a") as myfile:
+        myfile.write(f"{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n")
 
 def get_uptime():
     if platform.system() == "Windows":
@@ -262,7 +262,7 @@ def get_uptime():
 def dupe_console_to_file(filepath):
     class Logger(object):
         def __init__(self):
-            self.logfile = open(filepath, 'ab', 0)
+            self.logfile = open(filepath, "ab", 0)
             self.prevstdout = sys.stdout
 
         def write(self, message):
@@ -271,10 +271,10 @@ def dupe_console_to_file(filepath):
             self.logfile.write(message.encode())
             self.logfile.flush()
             global last_newline_inverted
-            if message and message[-1] == '\n':
-                last_newline_inverted = ''
+            if message and message[-1] == "\n":
+                last_newline_inverted = ""
             else:
-                last_newline_inverted = '\n'
+                last_newline_inverted = "\n"
 
         def __del__(self):
             self.logfile.close()
@@ -299,10 +299,10 @@ def get_percentage(whole, part):
 def custom_sleep(i):
     while i:
         if ping_fails:
-            ping_fails_str = ' (fails %d)' % ping_fails
-            set_console_title('%d%s' % (i, ping_fails_str))
+            ping_fails_str = " (fails %d)" % ping_fails
+            set_console_title("%d%s" % (i, ping_fails_str))
         else:
-            set_console_title('%d' % i)
+            set_console_title("%d" % i)
         i = i - 1
         j = 10
         while j:
@@ -311,25 +311,25 @@ def custom_sleep(i):
             if platform.system() == "Windows":
                 if get_active_window_handle() == console_window_handle:
                     # manual ping
-                    if keyboard.is_pressed('f1'):
-                        print('m', end='')
+                    if keyboard.is_pressed("f1"):
+                        print("m", end="")
                         i = 0
                         j = 0
                     # manual speed test
-                    elif keyboard.is_pressed('f2'):
+                    elif keyboard.is_pressed("f2"):
                         timedate_stamp = get_nice_timestamp()
-                        msg = last_newline_inverted + f'[{timedate_stamp}] manual'
+                        msg = last_newline_inverted + f"[{timedate_stamp}] manual"
                         show_download_speed(msg)
 
 def ping_host(host):
     try:
         if platform.system() == "Windows":
-            cmd = ['ping', '-n', '1', host]
+            cmd = ["ping", "-n", "1", host]
         else:
-            cmd = ['ping', '-c', '1', host]
+            cmd = ["ping", "-c", "1", host]
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
         # Extract the time in ms using regular expressions
-        time_match = re.search(r'time[=<](\d+)', output)
+        time_match = re.search(r"time[=<](\d+)", output)
         if time_match:
             time_ms = int(time_match.group(1))
             return time_ms
@@ -347,9 +347,9 @@ def show_ping(host):
         custom_sleep(5)
         ret_ping = ping_host(host)
     if ret_ping >= 0:
-        print(Style.BRIGHT + Fore.GREEN + '%d' % ret_ping, end='')
+        print(Style.BRIGHT + Fore.GREEN + "%d" % ret_ping, end="")
     else:
-        print(last_newline_inverted + Style.BRIGHT + Fore.RED + '%s ping down %d' % (timedate_stamp, ping_fails + 1))
+        print(last_newline_inverted + Style.BRIGHT + Fore.RED + "%s ping down %d" % (timedate_stamp, ping_fails + 1))
 
     sock = 0
     ret_sock = -1
@@ -364,9 +364,9 @@ def show_ping(host):
         sock.close()
 
     if ret_sock == 0:
-        print(Style.BRIGHT + Fore.GREEN + '.', end='');
+        print(Style.BRIGHT + Fore.GREEN + ".", end="");
     else:
-        print(last_newline_inverted + Style.BRIGHT + Fore.RED + '%s conn down %d' % (timedate_stamp, ping_fails + 1))
+        print(last_newline_inverted + Style.BRIGHT + Fore.RED + "%s conn down %d" % (timedate_stamp, ping_fails + 1))
 
     # successful only if both type of pings are ok
     return ret_ping >= 0 and ret_sock == 0
@@ -388,10 +388,10 @@ def GetCommandLine():
             cmdline = win32api.GetCommandLine()
         except ImportError:
             # fallback if win32api not installed
-            cmdline = ' '.join(sys.argv)
+            cmdline = " ".join(sys.argv)
     else:
         # Linux
-        cmdline = ' '.join(sys.argv)
+        cmdline = " ".join(sys.argv)
 
     return cmdline
 
@@ -399,66 +399,66 @@ def main():
     global ping_fails, args
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--host-to-ping', help='Host for ping', required=True)
-    parser.add_argument('--local-url1', required=True, help='Local speed test URL')
-    parser.add_argument('--local-url2', help='Local speed test URL 2 (optional)')
-    parser.add_argument('--global-url1', required=True, help='Global speed test URL')
-    parser.add_argument('--global-url2', help='Global speed test URL 2 (optional)')
-    parser.add_argument('--enable-yt-speed', action='store_true', help='Enable youtube speed test (optional)')
-    parser.add_argument('--telegram-update', help='Send data to telegram bot (optional)')
-    parser.add_argument('--offline-short-cmd', help='Run command on short offline time (optional)')
-    parser.add_argument('--offline-long-cmd', help='Run command on long offline time (optional)')
-    parser.add_argument('--offline-short-timeout', type=int, default=300, help='Short offline command timeout in seconds (optional)')
-    parser.add_argument('--offline-long-timeout', type=int, default=3600, help='Long offline command timeout in seconds (optional)')
+    parser.add_argument("--host-to-ping", help="Host for ping", required=True)
+    parser.add_argument("--local-url1", required=True, help="Local speed test URL")
+    parser.add_argument("--local-url2", help="Local speed test URL 2 (optional)")
+    parser.add_argument("--global-url1", required=True, help="Global speed test URL")
+    parser.add_argument("--global-url2", help="Global speed test URL 2 (optional)")
+    parser.add_argument("--enable-yt-speed", action="store_true", help="Enable youtube speed test (optional)")
+    parser.add_argument("--telegram-update", help="Send data to telegram bot (optional)")
+    parser.add_argument("--offline-short-cmd", help="Run command on short offline time (optional)")
+    parser.add_argument("--offline-long-cmd", help="Run command on long offline time (optional)")
+    parser.add_argument("--offline-short-timeout", type=int, default=300, help="Short offline command timeout in seconds (optional)")
+    parser.add_argument("--offline-long-timeout", type=int, default=3600, help="Long offline command timeout in seconds (optional)")
     args = parser.parse_args()
 
-    logfilename = get_nice_timestamp('pingport_%Y%m%d_%H%M%S.log')
+    logfilename = get_nice_timestamp("pingport_%Y%m%d_%H%M%S.log")
     dupe_console_to_file(logfilename)
-    timedate_stamp = get_nice_timestamp('[%Y-%m-%d %H:%M:%S]')
+    timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
     start_msg = timedate_stamp
     if platform.system() == "Windows":
-        start_msg = start_msg + ' pingport win started'
+        start_msg = start_msg + " pingport win started"
     else:
-        start_msg = start_msg + ' pingport lin started'
+        start_msg = start_msg + " pingport lin started"
     print(Style.BRIGHT + Fore.CYAN + start_msg)
     send_telegram(start_msg)
 
-    print('python version: "%s"' % sys.version)
-    print('python path: "%s"' % sys.executable)
-    print('cmdl: <%s>' % GetCommandLine())
-    print('log: "%s"' % logfilename)
-    print('system uptime: "%s"' % get_uptime())
-    print('host to ping: "%s"' % args.host_to_ping)
+    print("python version: \"%s\"" % sys.version)
+    print("python path: \"%s\"" % sys.executable)
+    print("cmdl: <%s>" % GetCommandLine())
+    print("log: \"%s\"" % logfilename)
+    print("system uptime: \"%s\"" % get_uptime())
+    print("host to ping: \"%s\"" % args.host_to_ping)
     try:
         host_to_ping_ip = socket.gethostbyname(args.host_to_ping)
-        print('host to ping ip: "%s"' % host_to_ping_ip)
-        print('host to ping ip reverse: "%s"' % reverse_ip(host_to_ping_ip))
+        print("host to ping ip: \"%s\"" % host_to_ping_ip)
+        print("host to ping ip reverse: \"%s\"" % reverse_ip(host_to_ping_ip))
     except Exception as e:
-        print(f'host to ping ip: failed - {str(e)}')
+        print(f"host to ping ip: failed - {str(e)}")
     loc_ip = socket.gethostbyname(socket.getfqdn())
-    print('local ip: "%s"' % loc_ip)
-    print('local ip reverse: "{}"'.format(reverse_ip(loc_ip)))
-    print('local name: "%s"' % socket.getfqdn())
+    print("local ip: \"%s\"" % loc_ip)
+    print("local ip reverse: \"{}\"".format(reverse_ip(loc_ip)))
+    print("local name: \"%s\"" % socket.getfqdn())
     try:
         wan_ip = get("https://api.ipify.org").content.decode("utf8")
-        print('wan ip: "{}"'.format(wan_ip))
-        print('wan ip reverse: "{}"'.format(reverse_ip(wan_ip)))
-        ip2isp_fn = 'dbip-asn-lite-2024-07.mmdb'
+        print("wan ip: \"{}\"".format(wan_ip))
+        print("wan ip reverse: \"{}\"".format(reverse_ip(wan_ip)))
+        ip2isp_fn = "dbip-asn-lite-2024-07.mmdb"
         if os.path.exists(ip2isp_fn):
             with maxminddb.open_database(ip2isp_fn) as reader:
                 rec = reader.get(wan_ip)
-                print('isp: "%s"' % rec['autonomous_system_organization'])
+                print("isp: \"%s\"" % rec["autonomous_system_organization"])
     except Exception as e:
-        print(f'wan ip: failed - {str(e)}')
+        print(f"wan ip: failed - {str(e)}")
     if args.offline_short_cmd:
-        print(f'offline short command: [{args.offline_short_cmd}]')
-        print(f'offline short timeout: {args.offline_short_timeout}')
+        print(f"offline short command: [{args.offline_short_cmd}]")
+        print(f"offline short timeout: {args.offline_short_timeout}")
     if args.offline_long_cmd:
-        print(f'offline long command: [{args.offline_long_cmd}]')
-        print(f'offline long timeout: {args.offline_long_timeout}')
+        print(f"offline long command: [{args.offline_long_cmd}]")
+        print(f"offline long timeout: {args.offline_long_timeout}")
     show_download_speed()
     if platform.system() == "Windows":
-        print('Press F1 for a manual ping, F2 for manual speed test\n')
+        print("Press F1 for a manual ping, F2 for manual speed test\n")
 
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
@@ -471,7 +471,7 @@ def main():
     day_count = 0
 
     while True:
-        timedate_stamp = get_nice_timestamp('[%Y-%m-%d %H:%M:%S]')
+        timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
         current_time = time.time()
 
         # Check if 60 minutes have passed
@@ -480,12 +480,12 @@ def main():
             last_60min_mark = current_time
             hour_count += 1
             if hours_passed >= 2:
-                hours_msg = '+%d hours slept\n\n\n' % hours_passed
+                hours_msg = "+%d hours slept\n\n\n" % hours_passed
                 print(last_newline_inverted + Style.BRIGHT + hours_msg)
                 send_telegram(hours_msg)
                 # wait some time after unsleep to allow network up
                 custom_sleep(10)
-            msg = last_newline_inverted + timedate_stamp + ' hour%d' % hour_count
+            msg = last_newline_inverted + timedate_stamp + " hour%d" % hour_count
             show_download_speed(msg)
 
         # Check if 24 hours have passed
@@ -495,18 +495,18 @@ def main():
             last_24hours_mark = current_time
             day_count += 1
             perc = get_percentage(ping_day_attempts, ping_day_ok)
-            partial = ''
+            partial = ""
             if ping_day_attempts != ping_day_ok:
-                partial = ' partial'
-            day_msg = timedate_stamp + ' day%d%s uptime %s%%, %d outof %d %s' % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
+                partial = " partial"
+            day_msg = timedate_stamp + " day%d%s uptime %s%%, %d outof %d %s" % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
             print(last_newline_inverted + Style.BRIGHT + day_msg)
             send_telegram(day_msg)
-            up_msg = 'system uptime: "%s"' % get_uptime()
-            print(up_msg, end='')
+            up_msg = "system uptime: \"%s\"" % get_uptime()
+            print(up_msg, end="")
             send_telegram(up_msg)
 
             # empty string between days
-            print('')
+            print("")
             # reset day counters
             ping_day_attempts = 0
             ping_day_ok = 0
@@ -518,7 +518,7 @@ def main():
         if result:
             ping_day_ok += 1
             if first_offline_time:
-                offline_msg = f'[{get_nice_timestamp(t=first_offline_time)}] offline\n'
+                offline_msg = f"[{get_nice_timestamp(t=first_offline_time)}] offline\n"
                 offline_time_dur_raw = current_time - first_offline_time
                 # reset offline period
                 first_offline_time = 0
@@ -526,8 +526,8 @@ def main():
                 offline_short_cmd_executed = False
                 offline_long_cmd_executed = False
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
-                offline_msg += f'{timedate_stamp} back online, downtime lasted {offline_time_dur_nice}'
-                print('\n' + offline_msg)
+                offline_msg += f"{timedate_stamp} back online, downtime lasted {offline_time_dur_nice}"
+                print("\n" + offline_msg)
                 send_telegram(offline_msg)
         # in case of ping fail check if offline command needed
         else:
@@ -539,13 +539,13 @@ def main():
 
             # after some offline time exec cmds
             if args.offline_short_cmd and not offline_short_cmd_executed and current_time - first_offline_time >= args.offline_short_timeout:
-                print(f'short offline command activated [{args.offline_short_cmd}]')
+                print(f"short offline command activated [{args.offline_short_cmd}]")
                 # exec cmd only once for each offline period
                 offline_short_cmd_executed = True
                 # exec cmd
                 subprocess.Popen(args.offline_short_cmd, shell=True)
             if args.offline_long_cmd and not offline_long_cmd_executed and current_time - first_offline_time >= args.offline_long_timeout:
-                print(f'long offline command activated [{args.offline_long_cmd}]')
+                print(f"long offline command activated [{args.offline_long_cmd}]")
                 # exec cmd only once for each offline period
                 offline_long_cmd_executed = True
                 # exec cmd
@@ -558,5 +558,5 @@ def main():
         # next good ping timeout
         custom_sleep(120)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
