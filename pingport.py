@@ -36,6 +36,7 @@ ping_fails = 0
 ping_fails_str = ""
 last_newline_inverted = ""
 args = None
+TAG = ''
 
 if platform.system() == "Windows":
     # Get the handle of the current console window
@@ -217,7 +218,7 @@ def show_download_speed(msg = ""):
     print("")
 
     # send monospace
-    send_telegram("`" + tg_msg + "`", parse_mode="MarkdownV2")
+    send_telegram("`" + tg_msg + TAG + "`", parse_mode="MarkdownV2")
 
     speed_file = "speed.csv"
     # if speed file not exist create header in it
@@ -410,30 +411,30 @@ def get_local_ip():
     return ip
 
 def main():
-    global ping_fails, args
+    global ping_fails, args, TAG
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--host-to-ping", help="Host for ping", required=True)
-    parser.add_argument("--local-url1", required=True, help="Local speed test URL")
+    parser.add_argument("--local-url1", help="Local speed test URL", required=True)
     parser.add_argument("--local-url2", help="Local speed test URL 2 (optional)")
-    parser.add_argument("--global-url1", required=True, help="Global speed test URL")
+    parser.add_argument("--global-url1", help="Global speed test URL", required=True)
     parser.add_argument("--global-url2", help="Global speed test URL 2 (optional)")
     parser.add_argument("--enable-yt-speed", action="store_true", help="Enable youtube speed test (optional)")
     parser.add_argument("--telegram-update", help="Send data to telegram bot (optional)")
     parser.add_argument("--offline-short-cmd", help="Run command on short offline time (optional)")
     parser.add_argument("--offline-long-cmd", help="Run command on long offline time (optional)")
-    parser.add_argument("--offline-short-timeout", type=int, default=300, help="Short offline command timeout in seconds (optional)")
-    parser.add_argument("--offline-long-timeout", type=int, default=3600, help="Long offline command timeout in seconds (optional)")
+    parser.add_argument("--offline-short-timeout", help="Short offline command timeout in seconds (optional)", type=int, default=300)
+    parser.add_argument("--offline-long-timeout", help="Long offline command timeout in seconds (optional)", type=int, default=3600)
+    parser.add_argument("--tag", help="Tag to identify various instances")
     args = parser.parse_args()
+    if args.tag:
+       TAG = args.tag
 
     logfilename = get_nice_timestamp("pingport_%Y%m%d_%H%M%S.log")
     dupe_console_to_file(logfilename)
     timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
     start_msg = timedate_stamp
-    if platform.system() == "Windows":
-        start_msg = start_msg + " pingport win started"
-    else:
-        start_msg = start_msg + " pingport lin started"
+    start_msg = start_msg + " pingport started" + TAG
     print(Style.BRIGHT + Fore.CYAN + start_msg)
     send_telegram(start_msg)
 
@@ -494,9 +495,10 @@ def main():
             last_60min_mark = current_time
             hour_count += 1
             if hours_passed >= 2:
-                hours_msg = "+%d hours slept\n\n\n" % hours_passed
+                hours_msg = "+%d hours slept" % hours_passed
                 print(last_newline_inverted + Style.BRIGHT + hours_msg)
-                send_telegram(hours_msg)
+                print("\n\n\n")
+                send_telegram(hours_msg + TAG)
                 # wait some time after unsleep to allow network up
                 custom_sleep(10)
             msg = last_newline_inverted + timedate_stamp + " hour%d" % hour_count
@@ -514,10 +516,10 @@ def main():
                 partial = " partial"
             day_msg = timedate_stamp + " day%d%s uptime %s%%, %d outof %d %s" % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
             print(last_newline_inverted + Style.BRIGHT + day_msg)
-            send_telegram(day_msg)
+            send_telegram(day_msg + TAG)
             up_msg = "system uptime: \"%s\"" % get_uptime()
             print(up_msg, end="")
-            send_telegram(up_msg)
+            send_telegram(up_msg + TAG)
 
             # empty string between days
             print("")
@@ -542,7 +544,7 @@ def main():
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
                 offline_msg += f"{timedate_stamp} back online, downtime lasted {offline_time_dur_nice}"
                 print("\n" + offline_msg)
-                send_telegram(offline_msg)
+                send_telegram(offline_msg + TAG)
         # in case of ping fail check if offline command needed
         else:
             ping_fails += 1
