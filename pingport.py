@@ -36,7 +36,7 @@ ping_fails = 0
 ping_fails_str = ""
 last_newline_inverted = ""
 args = None
-TAG = ''
+TAG = ""
 
 if platform.system() == "Windows":
     # Get the handle of the current console window
@@ -166,10 +166,10 @@ def show_download_speed(msg = ""):
 
     print("ping " + Style.BRIGHT + Fore.YELLOW + f"{ping}" + Style.RESET_ALL + "ms", end="")
 
-    url_1 = args.global_url1
-    url_2 = args.global_url2
-    url_3 = args.local_url1
-    url_4 = args.local_url2
+    url_1 = args.local_url1
+    url_2 = args.local_url2
+    url_3 = args.global_url1
+    url_4 = args.global_url2
 
     down_speed_1 = test_download_speed(url_1)
     if not down_speed_1:
@@ -183,7 +183,7 @@ def show_download_speed(msg = ""):
         down_speed_2 = round(down_speed_2 / 1_000_000, 1)
     down_speed_1_2 = max(down_speed_1, down_speed_2)
     if down_speed_1_2:
-        print(", glob " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_1_2}" + Style.RESET_ALL + "mbit", end="")
+        print(", loc " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_1_2}" + Style.RESET_ALL + "mbit", end="")
 
     down_speed_3 = test_download_speed(url_3)
     if not down_speed_3:
@@ -197,10 +197,10 @@ def show_download_speed(msg = ""):
         down_speed_4 = round(down_speed_4 / 1_000_000, 1)
     down_speed_3_4 = max(down_speed_3, down_speed_4)
     if down_speed_3_4:
-        print(", loc " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
+        print(", glob " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
     timedate_stamp = get_nice_timestamp()
-    tg_msg = f"ping {ping}ms ▒ glob {down_speed_1_2}mbit ▒ loc {down_speed_3_4}mbit"
+    tg_msg = f"ping {ping}ms ▒ loc/glob {down_speed_1_2}/{down_speed_3_4}mbit"
 
     down_speed_5 = 0
     if args.enable_yt_speed:
@@ -217,8 +217,10 @@ def show_download_speed(msg = ""):
     # print newline to done with speed output
     print("")
 
+    if TAG:
+        tg_msg += f" ▒ {TAG}"
     # send monospace
-    send_telegram("`" + tg_msg + TAG + "`", parse_mode="MarkdownV2")
+    send_telegram("`" + tg_msg + "`", parse_mode="MarkdownV2")
 
     speed_file = "speed.csv"
     # if speed file not exist create header in it
@@ -434,7 +436,9 @@ def main():
     dupe_console_to_file(logfilename)
     timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
     start_msg = timedate_stamp
-    start_msg = start_msg + " pingport started" + TAG
+    start_msg = start_msg + " pingport v0.1 started"
+    if TAG:
+        start_msg += f" *{TAG}"
     print(Style.BRIGHT + Fore.CYAN + start_msg)
     send_telegram(start_msg)
 
@@ -442,7 +446,7 @@ def main():
     print("python path: \"%s\"" % sys.executable)
     print("cmdl: <%s>" % GetCommandLine())
     print("log: \"%s\"" % logfilename)
-    print("system uptime: \"%s\"" % get_uptime())
+    print("system uptime: %s" % get_uptime())
     print("host to ping: \"%s\"" % args.host_to_ping)
     try:
         host_to_ping_ip = socket.gethostbyname(args.host_to_ping)
@@ -498,7 +502,9 @@ def main():
                 hours_msg = "+%d hours slept" % hours_passed
                 print(last_newline_inverted + Style.BRIGHT + hours_msg)
                 print("\n\n\n")
-                send_telegram(hours_msg + TAG)
+                if TAG:
+                    hours_msg += f" *{TAG}"
+                send_telegram(hours_msg)
                 # wait some time after unsleep to allow network up
                 custom_sleep(10)
             msg = last_newline_inverted + timedate_stamp + " hour%d" % hour_count
@@ -517,9 +523,13 @@ def main():
             day_msg = timedate_stamp + " day%d%s uptime %s%%, %d outof %d %s" % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
             print(last_newline_inverted + Style.BRIGHT + day_msg)
             send_telegram(day_msg + TAG)
-            up_msg = "system uptime: \"%s\"" % get_uptime()
+            if TAG:
+                day_msg += f" *{TAG}"
+            up_msg = "system uptime: %s" % get_uptime()
             print(up_msg, end="")
-            send_telegram(up_msg + TAG)
+            if TAG:
+                up_msg += f" *{TAG}"
+            send_telegram(up_msg)
 
             # empty string between days
             print("")
@@ -543,8 +553,10 @@ def main():
                 offline_long_cmd_executed = False
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
                 offline_msg += f"{timedate_stamp} back online, downtime lasted {offline_time_dur_nice}"
+                if TAG:
+                    offline_msg += f" *{TAG}"
                 print("\n" + offline_msg)
-                send_telegram(offline_msg + TAG)
+                send_telegram(offline_msg)
         # in case of ping fail check if offline command needed
         else:
             ping_fails += 1
