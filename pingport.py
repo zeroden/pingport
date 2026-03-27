@@ -218,7 +218,7 @@ def show_download_speed(msg = ""):
     print("")
 
     if TAG:
-        tg_msg += f" ▒ {TAG}"
+        tg_msg = f"{TAG} ▒ " + tg_msg
     # send monospace
     send_telegram("`" + tg_msg + "`", parse_mode="MarkdownV2")
 
@@ -435,12 +435,11 @@ def main():
     logfilename = get_nice_timestamp("pingport_%Y%m%d_%H%M%S.log")
     dupe_console_to_file(logfilename)
     timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
-    start_msg = timedate_stamp
-    start_msg = start_msg + " pingport v0.1 started"
+    start_msg = "pingport v0.1 started"
+    print(Style.BRIGHT + Fore.CYAN + timedate_stamp + " " + start_msg)
     if TAG:
-        start_msg += f" *{TAG}"
-    print(Style.BRIGHT + Fore.CYAN + start_msg)
-    send_telegram(start_msg)
+        start_msg = f"{TAG} {start_msg}"
+    send_telegram(timedate_stamp + " " + start_msg)
 
     print("python version: \"%s\"" % sys.version)
     print("python path: \"%s\"" % sys.executable)
@@ -522,13 +521,11 @@ def main():
                 partial = " partial"
             day_msg = timedate_stamp + " day%d%s uptime %s%%, %d outof %d %s" % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
             print(last_newline_inverted + Style.BRIGHT + day_msg)
-            send_telegram(day_msg + TAG)
-            if TAG:
-                day_msg += f" *{TAG}"
+            send_telegram(day_msg)
             up_msg = "system uptime: %s" % get_uptime()
             print(up_msg, end="")
             if TAG:
-                up_msg += f" *{TAG}"
+                up_msg = f"{TAG} {up_msg}"
             send_telegram(up_msg)
 
             # empty string between days
@@ -553,9 +550,9 @@ def main():
                 offline_long_cmd_executed = False
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
                 offline_msg += f"{timedate_stamp} back online, downtime lasted {offline_time_dur_nice}"
-                if TAG:
-                    offline_msg += f" *{TAG}"
                 print("\n" + offline_msg)
+                if TAG:
+                    offline_msg = f"{TAG}\n{offline_msg}"
                 send_telegram(offline_msg)
         # in case of ping fail check if offline command needed
         else:
