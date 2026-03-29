@@ -549,7 +549,7 @@ def main():
                 offline_short_cmd_executed = False
                 offline_long_cmd_executed = False
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
-                offline_msg += f"{timedate_stamp} back online, downtime lasted {offline_time_dur_nice}"
+                offline_msg += f"{timedate_stamp} online, downtime {offline_time_dur_nice}"
                 print("\n" + offline_msg)
                 if TAG:
                     offline_msg = f"{TAG}\n{offline_msg}"
