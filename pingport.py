@@ -31,12 +31,13 @@ from io import StringIO
 import argparse
 import subprocess
 import datetime
+import psutil
+import shutil
 
 ping_fails = 0
 ping_fails_str = ""
 last_newline_inverted = ""
 args = None
-TAG = ""
 
 if platform.system() == "Windows":
     # Get the handle of the current console window
@@ -200,7 +201,7 @@ def show_download_speed(msg = ""):
         print(", glob " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
     timedate_stamp = get_nice_timestamp()
-    tg_msg = f"ping {ping}ms ▒ loc/glob {down_speed_1_2}/{down_speed_3_4}mbit"
+    tg_msg = f"{socket.getfqdn()} ▒ ping {ping}ms ▒ loc/glob {down_speed_1_2}/{down_speed_3_4}mbit"
 
     down_speed_5 = 0
     if args.enable_yt_speed:
@@ -217,8 +218,6 @@ def show_download_speed(msg = ""):
     # print newline to done with speed output
     print("")
 
-    if TAG:
-        tg_msg = f"{TAG} ▒ " + tg_msg
     # send monospace
     send_telegram("`" + tg_msg + "`", parse_mode="MarkdownV2")
 
@@ -229,38 +228,6 @@ def show_download_speed(msg = ""):
             myfile.write("DATETIME,PING,GLOB,LOC,YT\n")
     with open(speed_file, "a") as myfile:
         myfile.write(f"{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n")
-
-def get_uptime():
-    if platform.system() == "Windows":
-        # use Windows API
-        # getting the library in which GetTickCount64() resides
-        lib = ctypes.windll.kernel32
-        # Set the return type to match the expected unsigned 64-bit integer (no negatives values)
-        lib.GetTickCount64.restype = ctypes.c_ulonglong
-        # calling the function and storing the return value
-        t = lib.GetTickCount64()  # milliseconds
-        # since the time is in milliseconds i.e. 1000 * seconds
-        # therefore truncating the value
-        t = int(str(t)[:-3])
-    else:
-        # Linux: read /proc/uptime
-        try:
-            with open("/proc/uptime", "r") as f:
-                t = float(f.readline().split()[0])  # seconds
-                t = int(t)
-        except Exception:
-            return "uptime unavailable"
-
-    # convert seconds to days, hours, minutes, seconds
-    # extracting hours, minutes, seconds & days from t
-    # variable (which stores total time in seconds)
-    mins, sec = divmod(t, 60)
-    hour, mins = divmod(mins, 60)
-    days, hour = divmod(hour, 24)
-
-    # formatting the time in readable form
-    # (format = x days, HH:MM:SS)
-    return f"{days} days, {hour:02}:{mins:02}:{sec:02}"
 
 def dupe_console_to_file(filepath):
     class Logger(object):
@@ -412,8 +379,103 @@ def get_local_ip():
         s.close()
     return ip
 
+def get_uptime():
+    if platform.system() == "Windows":
+        # use Windows API
+        # getting the library in which GetTickCount64() resides
+        lib = ctypes.windll.kernel32
+        # Set the return type to match the expected unsigned 64-bit integer (no negatives values)
+        lib.GetTickCount64.restype = ctypes.c_ulonglong
+        # calling the function and storing the return value
+        t = lib.GetTickCount64()  # milliseconds
+        # since the time is in milliseconds i.e. 1000 * seconds
+        # therefore truncating the value
+        t = int(str(t)[:-3])
+    else:
+        # Linux: read /proc/uptime
+        try:
+            with open("/proc/uptime", "r") as f:
+                t = float(f.readline().split()[0])  # seconds
+                t = int(t)
+        except Exception:
+            return "uptime unavailable"
+
+    # convert seconds to days, hours, minutes, seconds
+    # extracting hours, minutes, seconds & days from t
+    # variable (which stores total time in seconds)
+    mins, sec = divmod(t, 60)
+    hour, mins = divmod(mins, 60)
+    days, hour = divmod(hour, 24)
+
+    # formatting the time in readable form
+    # (format = x days, HH:MM:SS)
+    return f"{days} days, {hour:02}:{mins:02}:{sec:02}"
+
+def human_bytes(num: int) -> str:
+    step = 1024.0
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if num < step:
+            return f"{num:.2f} {unit}"
+        num /= step
+    return f"{num:.2f} PB"
+
+
+def get_all_storage_info():
+    disks = []
+
+    for part in psutil.disk_partitions(all=False):
+        try:
+            usage = shutil.disk_usage(part.mountpoint)
+
+            disks.append({
+                "device": part.device,
+                "mountpoint": part.mountpoint,
+                "fstype": part.fstype,
+                "total": usage.total,
+                "free": usage.free,
+                "used": usage.used,
+                "total_h": human_bytes(usage.total),
+                "free_h": human_bytes(usage.free),
+                "used_h": human_bytes(usage.used),
+            })
+
+        except PermissionError:
+            # some system partitions are not accessible
+            continue
+
+    return disks
+
+
+def get_memory_info():
+    mem = psutil.virtual_memory()
+    return {
+        "total_h": human_bytes(mem.total),
+        "free_h": human_bytes(mem.available),
+    }
+
+
+def get_cpu_load_percent():
+    return psutil.cpu_percent(interval=1)
+
+def get_system_info():
+    disks = get_all_storage_info()
+
+    s = "hostname: %s\n" % socket.getfqdn()
+    s += "system uptime: %s\n" % get_uptime()
+    s += "storage devices:\n"
+    for d in disks:
+        s += f"{d['device']} ({d['mountpoint']}) [{d['fstype']}] - total {d['total_h']}, free  {d['free_h']}\n"
+
+    mem = get_memory_info()
+    s += f"memory: total {mem['total_h']}, free  {mem['free_h']}\n"
+
+    cpu = get_cpu_load_percent()
+    s += f"cpu load: {cpu:.1f}%"
+
+    return s
+
 def main():
-    global ping_fails, args, TAG
+    global ping_fails, args
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--host-to-ping", help="Host for ping", required=True)
@@ -427,25 +489,20 @@ def main():
     parser.add_argument("--offline-long-cmd", help="Run command on long offline time (optional)")
     parser.add_argument("--offline-short-timeout", help="Short offline command timeout in seconds (optional)", type=int, default=300)
     parser.add_argument("--offline-long-timeout", help="Long offline command timeout in seconds (optional)", type=int, default=3600)
-    parser.add_argument("--tag", help="Tag to identify various instances")
     args = parser.parse_args()
-    if args.tag:
-       TAG = args.tag
 
     logfilename = get_nice_timestamp("pingport_%Y%m%d_%H%M%S.log")
     dupe_console_to_file(logfilename)
     timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
-    start_msg = "pingport v0.1 started"
+    hostname = socket.getfqdn()
+    start_msg = "pingport v0.1 started (%s)" % hostname
     print(Style.BRIGHT + Fore.CYAN + timedate_stamp + " " + start_msg)
-    if TAG:
-        start_msg = f"{TAG} {start_msg}"
     send_telegram(timedate_stamp + " " + start_msg)
 
     print("python version: \"%s\"" % sys.version)
     print("python path: \"%s\"" % sys.executable)
     print("cmdl: <%s>" % GetCommandLine())
     print("log: \"%s\"" % logfilename)
-    print("system uptime: %s" % get_uptime())
     print("host to ping: \"%s\"" % args.host_to_ping)
     try:
         host_to_ping_ip = socket.gethostbyname(args.host_to_ping)
@@ -456,7 +513,6 @@ def main():
     loc_ip = get_local_ip()
     print("local ip: \"%s\"" % loc_ip)
     print("local ip reverse: \"{}\"".format(reverse_ip(loc_ip)))
-    print("local name: \"%s\"" % socket.getfqdn())
     try:
         wan_ip = get("https://api.ipify.org").content.decode("utf8")
         print("wan ip: \"{}\"".format(wan_ip))
@@ -474,9 +530,13 @@ def main():
     if args.offline_long_cmd:
         print(f"offline long command: [{args.offline_long_cmd}]")
         print(f"offline long timeout: {args.offline_long_timeout}")
-    show_download_speed()
+    sys_info = get_system_info()
+    print(sys_info)
+    timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
+    send_telegram(timedate_stamp + " " + sys_info)
     if platform.system() == "Windows":
         print("Press F1 for a manual ping, F2 for manual speed test\n")
+    show_download_speed()
 
     last_60min_mark = time.time()
     last_24hours_mark = time.time()
@@ -501,8 +561,7 @@ def main():
                 hours_msg = "+%d hours slept" % hours_passed
                 print(last_newline_inverted + Style.BRIGHT + hours_msg)
                 print("\n\n\n")
-                if TAG:
-                    hours_msg += f" *{TAG}"
+                hours_msg += " (%s)" % hostname
                 send_telegram(hours_msg)
                 # wait some time after unsleep to allow network up
                 custom_sleep(10)
@@ -522,10 +581,8 @@ def main():
             day_msg = timedate_stamp + " day%d%s uptime %s%%, %d outof %d %s" % (day_count, partial, perc, ping_day_ok, ping_day_attempts, ping_fails_str)
             print(last_newline_inverted + Style.BRIGHT + day_msg)
             send_telegram(day_msg)
-            up_msg = "system uptime: %s" % get_uptime()
+            up_msg = "%s\n" % get_system_info()
             print(up_msg, end="")
-            if TAG:
-                up_msg = f"{TAG} {up_msg}"
             send_telegram(up_msg)
 
             # empty string between days
@@ -541,7 +598,7 @@ def main():
         if result:
             ping_day_ok += 1
             if first_offline_time:
-                offline_msg = f"[{get_nice_timestamp(t=first_offline_time)}] offline\n"
+                offline_msg = f"[{get_nice_timestamp(t=first_offline_time)}] {hostname} offline\n"
                 offline_time_dur_raw = current_time - first_offline_time
                 # reset offline period
                 first_offline_time = 0
@@ -551,8 +608,6 @@ def main():
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
                 offline_msg += f"{timedate_stamp} online, downtime {offline_time_dur_nice}"
                 print("\n" + offline_msg)
-                if TAG:
-                    offline_msg = f"{TAG}\n{offline_msg}"
                 send_telegram(offline_msg)
         # in case of ping fail check if offline command needed
         else:
