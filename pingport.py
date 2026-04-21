@@ -165,6 +165,9 @@ def send_telegram(text, parse_mode=None):
                 custom_sleep(180)
                 send_telegram_worker(text, parse_mode)
 
+def get_hostname():
+    return socket.getfqdn()
+
 def show_download_speed(msg = ""):
     global ARGS, LAST_NEWLINE_INVERTED
 
@@ -215,7 +218,7 @@ def show_download_speed(msg = ""):
         print(", glob " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
     timedate_stamp = get_nice_timestamp()
-    tg_msg = f"{socket.getfqdn()} ▒ ping {ping}ms ▒ loc/glob {down_speed_1_2}/{down_speed_3_4}mbit"
+    tg_msg = f"{get_hostname()} ▒ ping {ping}ms ▒ loc/glob {down_speed_1_2}/{down_speed_3_4}mbit"
 
     down_speed_5 = 0
     if ARGS.enable_yt_speed:
@@ -361,7 +364,7 @@ def reverse_ip(ip):
         hostname = socket.gethostbyaddr(ip)[0]
     except socket.herror:
         # fallback: get fqdn of local ip
-        hostname = socket.getfqdn()
+        hostname = get_hostname()
     return hostname
 
 def nice_duration(time):
@@ -474,7 +477,7 @@ def get_cpu_load_percent():
 def get_system_info():
     disks = get_all_storage_info()
 
-    s = "hostname: %s\n" % socket.getfqdn()
+    s = "hostname: %s\n" % get_hostname()
     s += "system uptime: %s\n" % get_uptime()
     s += "storage devices:\n"
     for d in disks:
@@ -508,7 +511,7 @@ def main():
     logfilename = get_nice_timestamp("pingport_%Y%m%d_%H%M%S.log")
     dupe_console_to_file(logfilename)
     timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
-    hostname = socket.getfqdn()
+    hostname = get_hostname()
     
     start_msg = f"pingport {PINGPORT_VERSION} started ({hostname})"
     print(Style.BRIGHT + Fore.CYAN + timedate_stamp + " " + start_msg)
@@ -593,7 +596,7 @@ def main():
             partial = ""
             if ping_day_attempts != ping_day_ok:
                 partial = " part"
-            day_msg = timedate_stamp + " day%d%s uptime %s%%, %d of %d %s" % (day_count, partial, perc, ping_day_ok, ping_day_attempts, PING_FAILS_STR)
+            day_msg = f"{timedate_stamp} {get_hostname()} day{day_count}{partial} up {perc}%, {ping_day_ok}/{ping_day_attempts} {PING_FAILS_STR}"
             print(LAST_NEWLINE_INVERTED + Style.BRIGHT + day_msg)
             send_telegram(day_msg)
             up_msg = "%s\n" % get_system_info()
