@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.3"
+PINGPORT_VERSION = "v0.4"
 
 import socket
 import time
@@ -40,6 +40,13 @@ PING_FAILS = 0
 PING_FAILS_STR = ""
 LAST_NEWLINE_INVERTED = ""
 ARGS = None
+DAY_PING_TIME_TTL = 0
+DAY_PING_TIME_CNT = 0
+DAY_DOWN_SPEED_LOC_TTL = 0
+DAY_DOWN_SPEED_LOC_CNY = 0
+DAY_DOWN_SPEED_GLO_TTL = 0
+DAY_DOWN_SPEED_GLO_CNY = 0
+SEND_TELEGRAM_FAILS = 0
 
 if platform.system() == "Windows":
     # Get the handle of the current console window
@@ -130,8 +137,6 @@ def get_nice_timestamp(fmt="%Y-%m-%d %H:%M:%S", t=None):
     return time.strftime(fmt, t)
 
 def send_telegram_worker(text, parse_mode=None):
-    global ARGS
-
     if not ARGS.telegram_update:
         return True
 
@@ -157,19 +162,31 @@ def send_telegram_worker(text, parse_mode=None):
         return False
 
 def send_telegram(text, parse_mode=None):
-    if not send_telegram_worker(text, parse_mode):
+    global SEND_TELEGRAM_FAILS
+
+    if SEND_TELEGRAM_FAILS:
+        text += f"\n(tg fails {SEND_TELEGRAM_FAILS})"
+
+    ret = send_telegram_worker(text, parse_mode)
+    if not ret:
+        print("tg try 2")
         custom_sleep(10)
-        if not send_telegram_worker(text, parse_mode):
+        ret = send_telegram_worker(text, parse_mode)
+        if not ret:
+            print("tg try 3")
             custom_sleep(60)
-            if not send_telegram_worker(text, parse_mode):
-                custom_sleep(180)
-                send_telegram_worker(text, parse_mode)
+            ret = send_telegram_worker(text, parse_mode)
+
+    if ret:
+        SEND_TELEGRAM_FAILS = 0
+    else:
+        SEND_TELEGRAM_FAILS += 1
 
 def get_hostname():
     return socket.getfqdn()
 
 def show_download_speed(msg = ""):
-    global ARGS, LAST_NEWLINE_INVERTED
+    global DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNY, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNY
 
     if msg:
         msg = "%s, speed: " % msg
@@ -215,10 +232,14 @@ def show_download_speed(msg = ""):
         down_speed_4 = round(down_speed_4 / 1_000_000, 1)
     down_speed_3_4 = max(down_speed_3, down_speed_4)
     if down_speed_3_4:
-        print(", glob " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
+        print(", glo " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
     timedate_stamp = get_nice_timestamp()
-    tg_msg = f"{get_hostname()} ▒ ping {ping}ms ▒ loc/glob {down_speed_1_2}/{down_speed_3_4}mbit"
+    tg_msg = f"{get_hostname()} ▒ ping {ping}ms ▒ loc/glo {down_speed_1_2}/{down_speed_3_4}mbit"
+    DAY_DOWN_SPEED_LOC_TTL += down_speed_1_2
+    DAY_DOWN_SPEED_LOC_CNY += 1
+    DAY_DOWN_SPEED_GLO_TTL += down_speed_3_4
+    DAY_DOWN_SPEED_GLO_CNY += 1
 
     down_speed_5 = 0
     if ARGS.enable_yt_speed:
@@ -281,7 +302,7 @@ def get_percentage(whole, part):
         perc = 100 * float(part) / float(whole)
     else:
         perc = 0
-    return str(round(perc))
+    return str(round(perc, 2))
 
 def custom_sleep(i):
     while i:
@@ -326,14 +347,14 @@ def ping_host(host):
         return -1  # General failure
 
 def show_ping(host):
+    global DAY_PING_TIME_TTL, DAY_PING_TIME_CNT
+
     timedate_stamp = get_nice_timestamp()
     # ping using classical ping
     ret_ping = ping_host(host)
-    # make second ping try
-    if ret_ping < 0:
-        custom_sleep(5)
-        ret_ping = ping_host(host)
     if ret_ping >= 0:
+        DAY_PING_TIME_TTL += ret_ping
+        DAY_PING_TIME_CNT += 1
         print(Style.BRIGHT + Fore.GREEN + "%d" % ret_ping, end="")
     else:
         print(LAST_NEWLINE_INVERTED + Style.BRIGHT + Fore.RED + "%s ping down %d" % (timedate_stamp, PING_FAILS + 1))
@@ -477,9 +498,8 @@ def get_cpu_load_percent():
 def get_system_info():
     disks = get_all_storage_info()
 
-    s = "hostname: %s\n" % get_hostname()
-    s += "system uptime: %s\n" % get_uptime()
-    s += "storage devices:\n"
+    s = f"{get_hostname()} uptime: {get_uptime()}\n"
+    s += "storage:\n"
     for d in disks:
         s += f"{d['device']} ({d['mountpoint']}) [{d['fstype']}] - total {d['total_h']}, free {d['free_h']}\n"
 
@@ -487,12 +507,12 @@ def get_system_info():
     s += f"memory: total {mem['total_h']}, free {mem['free_h']}\n"
 
     cpu = get_cpu_load_percent()
-    s += f"cpu load: {cpu:.1f}%"
+    s += f"cpu: {cpu:.0f}%"
 
     return s
 
 def main():
-    global PING_FAILS, ARGS, PINGPORT_VER
+    global PING_FAILS, ARGS, DAY_PING_TIME_TTL, DAY_PING_TIME_CNT, DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNY, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNY
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--host-to-ping", help="Host for ping", required=True)
@@ -512,42 +532,63 @@ def main():
     dupe_console_to_file(logfilename)
     timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
     hostname = get_hostname()
-    
-    start_msg = f"pingport {PINGPORT_VERSION} started ({hostname})"
-    print(Style.BRIGHT + Fore.CYAN + timedate_stamp + " " + start_msg)
-    send_telegram(timedate_stamp + " " + start_msg)
 
-    print("python version: \"%s\"" % sys.version)
-    print("python path: \"%s\"" % sys.executable)
-    print("cmdl: <%s>" % GetCommandLine())
-    print("log: \"%s\"" % logfilename)
-    print("host to ping: \"%s\"" % ARGS.host_to_ping)
+    tg_msg = (s := f"pingport {PINGPORT_VERSION} started @ {hostname}") + "\n"
+    print(Style.BRIGHT + Fore.CYAN + timedate_stamp + " " + s)
+
+    tg_msg += (s := f"python version: \"{sys.version}\"") + "\n"
+    print(s)
+    tg_msg += (s := f"python path: \"{sys.executable}\"") + "\n"
+    print(s)
+    print(f"cmdl: <{GetCommandLine()}>")
+    tg_msg += (s := f"log: \"{logfilename}\"") + "\n"
+    print(s)
+    tg_msg += (s := f"hostname: {hostname}") + "\n"
+    print(s)
+    tg_msg += (s := f"host to ping: \"{ARGS.host_to_ping}\"") + "\n"
+    print(s)
     try:
         host_to_ping_ip = socket.gethostbyname(ARGS.host_to_ping)
-        print("host to ping ip: \"%s\"" % host_to_ping_ip)
-        print("host to ping ip reverse: \"%s\"" % reverse_ip(host_to_ping_ip))
+        tg_msg += (s := f"host to ping ip: \"{host_to_ping_ip}\"") + "\n"
+        print(s)
+        tg_msg += (s := f"host to ping ip reverse: \"{reverse_ip(host_to_ping_ip)}\"") + "\n"
+        print(s)
     except Exception as e:
-        print(f"host to ping ip: failed - {str(e)}")
+        tg_msg += (s := f"host to ping ip: failed - {str(e)}") + "\n"
+        print(s)
     loc_ip = get_local_ip()
-    print("local ip: \"%s\"" % loc_ip)
-    print("local ip reverse: \"{}\"".format(reverse_ip(loc_ip)))
+    tg_msg += (s := f"local ip: \"{loc_ip}\"") + "\n"
+    print(s)
+    tg_msg += (s := f"local ip reverse: \"{reverse_ip(loc_ip)}\"") + "\n"
+    print(s)
     try:
         wan_ip = get("https://api.ipify.org").content.decode("utf8")
-        print("wan ip: \"{}\"".format(wan_ip))
-        print("wan ip reverse: \"{}\"".format(reverse_ip(wan_ip)))
+        tg_msg += (s := f"wan ip: \"{wan_ip}\"") + "\n"
+        print(s)
+        tg_msg += (s := f"wan ip reverse: \"{reverse_ip(wan_ip)}\"") + "\n"
+        print(s)
         ip2isp_fn = "dbip-asn-lite-2024-07.mmdb"
         if os.path.exists(ip2isp_fn):
             with maxminddb.open_database(ip2isp_fn) as reader:
                 rec = reader.get(wan_ip)
-                print("isp: \"%s\"" % rec["autonomous_system_organization"])
+                tg_msg += (s := f"isp: \"{rec['autonomous_system_organization']}\"") + "\n"
+                print(s)
     except Exception as e:
-        print(f"wan ip: failed - {str(e)}")
+        tg_msg += (s := f"wan ip: failed - {str(e)}") + "\n"
+        print(s)
+
+    # Insert in url a character that is invisible to humans, but breaks Telegram’s link detection
+    # The most useful one is: zero width space → \u200b
+    tg_msg = tg_msg.replace(".", ".\u200b")
+    send_telegram(timedate_stamp + " " + tg_msg)
+
     if ARGS.offline_short_cmd:
         print(f"offline short command: [{ARGS.offline_short_cmd}]")
         print(f"offline short timeout: {ARGS.offline_short_timeout}")
     if ARGS.offline_long_cmd:
         print(f"offline long command: [{ARGS.offline_long_cmd}]")
         print(f"offline long timeout: {ARGS.offline_long_timeout}")
+
     sys_info = get_system_info()
     print(sys_info)
     timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
@@ -561,10 +602,10 @@ def main():
     offline_short_cmd_executed = False
     offline_long_cmd_executed = False
     first_offline_time = 0
-    ping_day_attempts = 0
-    ping_day_ok = 0
     hour_count = 0
     day_count = 0
+    day_ping_attempts = 0
+    day_ping_ok = 0
 
     while True:
         timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
@@ -592,29 +633,37 @@ def main():
             # reset day marker
             last_24hours_mark = current_time
             day_count += 1
-            perc = get_percentage(ping_day_attempts, ping_day_ok)
+            perc = get_percentage(day_ping_attempts, day_ping_ok)
             partial = ""
-            if ping_day_attempts != ping_day_ok:
-                partial = " part"
-            day_msg = f"{timedate_stamp} {get_hostname()} day{day_count}{partial} up {perc}%, {ping_day_ok}/{ping_day_attempts} {PING_FAILS_STR}"
-            print(LAST_NEWLINE_INVERTED + Style.BRIGHT + day_msg)
-            send_telegram(day_msg)
-            up_msg = "%s\n" % get_system_info()
-            print(up_msg, end="")
-            send_telegram(up_msg)
+            if day_ping_attempts != day_ping_ok:
+                partial = "partial "
+            day_msg_pre = f"{timedate_stamp} {get_hostname()} day{day_count}\n"
+            print(LAST_NEWLINE_INVERTED + Style.BRIGHT + "\n" + day_msg_pre, end = "")
+            day_msg = f"up: {partial}{perc}%, {day_ping_ok}/{day_ping_attempts} {PING_FAILS_STR}\n"
+            day_avg_ping = round(DAY_PING_TIME_TTL / DAY_PING_TIME_CNT, 1)
+            day_avg_speed_loc = round(DAY_DOWN_SPEED_LOC_TTL / DAY_DOWN_SPEED_LOC_CNY, 1)
+            day_avg_speed_glo = round(DAY_DOWN_SPEED_GLO_TTL / DAY_DOWN_SPEED_GLO_CNY, 1)
+            day_msg += f"avg: ping {day_avg_ping}, loc/glo {day_avg_speed_loc}/{day_avg_speed_glo}mbit\n"
+            day_msg += get_system_info()
+            print(day_msg + "\n")
+            send_telegram(day_msg_pre + day_msg)
 
-            # empty string between days
-            print("")
             # reset day counters
-            ping_day_attempts = 0
-            ping_day_ok = 0
+            day_ping_attempts = 0
+            day_ping_ok = 0
+            DAY_PING_TIME_TTL = 0
+            DAY_PING_TIME_CNT += 0
+            DAY_DOWN_SPEED_LOC_TTL = 0
+            DAY_DOWN_SPEED_LOC_CNY = 0
+            DAY_DOWN_SPEED_GLO_TTL = 0
+            DAY_DOWN_SPEED_GLO_CNY = 0
 
-        ping_day_attempts += 1
+        day_ping_attempts += 1
 
         result = show_ping(ARGS.host_to_ping)
         # ping ok
         if result:
-            ping_day_ok += 1
+            day_ping_ok += 1
             if first_offline_time:
                 offline_msg = f"[{get_nice_timestamp(t=first_offline_time)}] {hostname} offline\n"
                 offline_time_dur_raw = current_time - first_offline_time
