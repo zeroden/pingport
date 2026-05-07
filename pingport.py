@@ -31,7 +31,6 @@ import yt_dlp
 import contextlib
 from io import StringIO
 import argparse
-import subprocess
 import datetime
 import psutil
 import shutil
@@ -48,17 +47,21 @@ DAY_DOWN_SPEED_GLO_TTL = 0
 DAY_DOWN_SPEED_GLO_CNY = 0
 SEND_TELEGRAM_FAILS = 0
 
+
 if platform.system() == "Windows":
     # Get the handle of the current console window
     console_window_handle = ctypes.windll.kernel32.GetConsoleWindow()
+
 
 def get_active_window_handle():
     # Get the handle of the currently active window
     return ctypes.windll.user32.GetForegroundWindow()
 
+
 def set_console_title(s):
     if platform.system() == "Windows":
         win32api.SetConsoleTitle("pingport: " + s)
+
 
 def test_youtube_speed(video_url):
     temp_filename = "temp_video.mp4"
@@ -101,6 +104,7 @@ def test_youtube_speed(video_url):
 
     return yt_speed_mbps
 
+
 def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
     url = url + "?x=%s" % anti_cache_stamp
@@ -132,9 +136,11 @@ def test_download_speed(url):
 
     return down_speed_byte * 8
 
+
 def get_nice_timestamp(fmt="%Y-%m-%d %H:%M:%S", t=None):
     t = time.localtime(t)  # use current local time to convert float timestamp to struct_time
     return time.strftime(fmt, t)
+
 
 def send_telegram_worker(text, parse_mode=None):
     if not ARGS.telegram_update:
@@ -161,6 +167,7 @@ def send_telegram_worker(text, parse_mode=None):
         print(msg)
         return False
 
+
 def send_telegram(text, parse_mode=None):
     global SEND_TELEGRAM_FAILS
 
@@ -182,8 +189,10 @@ def send_telegram(text, parse_mode=None):
     else:
         SEND_TELEGRAM_FAILS += 1
 
+
 def get_hostname():
     return socket.getfqdn()
+
 
 def show_download_speed(msg = ""):
     global DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNY, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNY
@@ -235,7 +244,7 @@ def show_download_speed(msg = ""):
         print(", glo " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
     timedate_stamp = get_nice_timestamp()
-    tg_msg = f"{get_hostname()} ▒ ping {ping}ms ▒ loc/glo {down_speed_1_2}/{down_speed_3_4}mbit"
+    tg_msg = f"{get_hostname()} ▒ ping {ping} ▒ loc/glo {down_speed_1_2}/{down_speed_3_4}"
     DAY_DOWN_SPEED_LOC_TTL += down_speed_1_2
     DAY_DOWN_SPEED_LOC_CNY += 1
     DAY_DOWN_SPEED_GLO_TTL += down_speed_3_4
@@ -267,6 +276,7 @@ def show_download_speed(msg = ""):
     with open(speed_file, "a") as myfile:
         myfile.write(f"{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n")
 
+
 def dupe_console_to_file(filepath):
     class Logger(object):
         def __init__(self):
@@ -297,12 +307,14 @@ def dupe_console_to_file(filepath):
     # no necessary, but redirect errors too
     sys.stderr = sys.stdout
 
+
 def get_percentage(whole, part):
     if whole:
         perc = 100 * float(part) / float(whole)
     else:
         perc = 0
     return str(round(perc, 2))
+
 
 def custom_sleep(i):
     while i:
@@ -329,6 +341,7 @@ def custom_sleep(i):
                         msg = LAST_NEWLINE_INVERTED + f"[{timedate_stamp}] manual"
                         show_download_speed(msg)
 
+
 def ping_host(host):
     try:
         if platform.system() == "Windows":
@@ -345,6 +358,7 @@ def ping_host(host):
             return -1  # General failure
     except (subprocess.CalledProcessError, PermissionError, Exception):
         return -1  # General failure
+
 
 def show_ping(host):
     global DAY_PING_TIME_TTL, DAY_PING_TIME_CNT
@@ -379,6 +393,7 @@ def show_ping(host):
     # successful only if both type of pings are ok
     return ret_ping >= 0 and ret_sock == 0
 
+
 def reverse_ip(ip):
     # try reverse lookup
     try:
@@ -388,8 +403,10 @@ def reverse_ip(ip):
         hostname = get_hostname()
     return hostname
 
+
 def nice_duration(time):
     return str(datetime.timedelta(seconds=int(time)))
+
 
 def GetCommandLine():
     if platform.system() == "Windows":
@@ -405,6 +422,7 @@ def GetCommandLine():
 
     return cmdline
 
+
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -416,6 +434,7 @@ def get_local_ip():
     finally:
         s.close()
     return ip
+
 
 def get_uptime():
     if platform.system() == "Windows":
@@ -448,6 +467,7 @@ def get_uptime():
     # formatting the time in readable form
     # (format = x days, HH:MM:SS)
     return f"{days} days, {hour:02}:{mins:02}:{sec:02}"
+
 
 def human_bytes(num: int) -> str:
     step = 1024.0
@@ -495,11 +515,97 @@ def get_memory_info():
 def get_cpu_load_percent():
     return psutil.cpu_percent(interval=1)
 
+
+def get_platform():
+    system = platform.system()
+
+    if system == "Windows":
+        try:
+            return subprocess.check_output(
+                ["powershell", "-Command", "Get-CimInstance Win32_Processor | Select-Object -ExpandProperty Name"],
+                text=True
+            ).strip()
+        except:
+            return os.popen("wmic cpu get name").read().split("\n")[1].strip()
+
+    if system == "Linux":
+        try:
+            with open("/proc/device-tree/model") as f:
+                return f.read().strip("\x00")
+        except:
+            pass
+        try:
+            with open("/proc/cpuinfo") as f:
+                for line in f:
+                    if "model name" in line:
+                        return line.split(":", 1)[1].strip()
+        except:
+            pass
+
+        try:
+            with open("/proc/cpuinfo") as f:
+                for line in f:
+                    if "model name" in line:
+                        return line.split(":", 1)[1].strip()
+        except:
+            pass
+
+    return platform.processor() or "Unknown CPU"
+
+
+def get_linux_os():
+    os_name = "Unknown"
+    debian_ver = ""
+
+    try:
+        with open("/etc/os-release") as f:
+            for line in f:
+                if line.startswith("PRETTY_NAME"):
+                    os_name = line.split("=", 1)[1].strip().strip('"')
+    except:
+        pass
+
+    try:
+        with open("/etc/debian_version") as f:
+            debian_ver = f.read().strip()
+    except:
+        pass
+
+    extra = f" | Debian {debian_ver}" if debian_ver else ""
+    return f"{os_name}{extra} | Kernel {platform.release()} | Arch {platform.machine()}"
+
+
+def get_windows_os():
+    # More detailed Windows version string
+    ver = platform.version()
+    rel = platform.release()
+    win = platform.system()
+
+    # Optional: more precise build info
+    try:
+        build = platform.win32_ver()[1]
+        return f"{win} {rel} (build {build})"
+    except:
+        return f"{win} {rel} | Version {ver}"
+
+def get_os():
+    if os.name == "posix":
+        osinfo = get_linux_os()
+    elif os.name == "nt":
+        osinfo = get_windows_os()
+    else:
+        osinfo = "Unknown OS"
+
+    return osinfo
+
+
 def get_system_info():
-    disks = get_all_storage_info()
 
     s = f"{get_hostname()} uptime: {get_uptime()}\n"
+    s += f"platform: {get_platform()}\n"
+    s += f"os: {get_os()}\n"
     s += "storage:\n"
+    disks = get_all_storage_info()
     for d in disks:
         s += f"{d['device']} ({d['mountpoint']}) [{d['fstype']}] - total {d['total_h']}, free {d['free_h']}\n"
 
@@ -510,6 +616,7 @@ def get_system_info():
     s += f"cpu: {cpu:.0f}%"
 
     return s
+
 
 def main():
     global PING_FAILS, ARGS, DAY_PING_TIME_TTL, DAY_PING_TIME_CNT, DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNY, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNY
@@ -704,6 +811,7 @@ def main():
 
         # next good ping timeout
         custom_sleep(120)
+
 
 if __name__ == "__main__":
     main()
