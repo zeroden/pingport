@@ -750,7 +750,7 @@ def main():
             day_avg_ping = round(DAY_PING_TIME_TTL / DAY_PING_TIME_CNT, 1)
             day_avg_speed_loc = round(DAY_DOWN_SPEED_LOC_TTL / DAY_DOWN_SPEED_LOC_CNY, 1)
             day_avg_speed_glo = round(DAY_DOWN_SPEED_GLO_TTL / DAY_DOWN_SPEED_GLO_CNY, 1)
-            day_msg += f"avg: ping {day_avg_ping}, speed {day_avg_speed_loc>4} {day_avg_speed_glo>4}mbit\n"
+            day_msg += f"avg: ping {day_avg_ping}, speed {day_avg_speed_loc} - {day_avg_speed_glo}\n"
             day_msg += get_system_info()
             print(day_msg + "\n")
             send_telegram(day_msg_pre + day_msg)
