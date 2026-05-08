@@ -244,7 +244,7 @@ def show_download_speed(msg = ""):
         print(", glo " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
     timedate_stamp = get_nice_timestamp()
-    tg_msg = f"{get_hostname()} ▒ ping {ping} ▒ loc/glo {down_speed_1_2}/{down_speed_3_4}"
+    tg_msg = f"{get_hostname()} ▒ ping {ping:>3} ▒ speed {down_speed_1_2:>4} - {down_speed_3_4:>4}"
     DAY_DOWN_SPEED_LOC_TTL += down_speed_1_2
     DAY_DOWN_SPEED_LOC_CNY += 1
     DAY_DOWN_SPEED_GLO_TTL += down_speed_3_4
@@ -750,7 +750,7 @@ def main():
             day_avg_ping = round(DAY_PING_TIME_TTL / DAY_PING_TIME_CNT, 1)
             day_avg_speed_loc = round(DAY_DOWN_SPEED_LOC_TTL / DAY_DOWN_SPEED_LOC_CNY, 1)
             day_avg_speed_glo = round(DAY_DOWN_SPEED_GLO_TTL / DAY_DOWN_SPEED_GLO_CNY, 1)
-            day_msg += f"avg: ping {day_avg_ping}, loc/glo {day_avg_speed_loc}/{day_avg_speed_glo}mbit\n"
+            day_msg += f"avg: ping {day_avg_ping}, speed {day_avg_speed_loc>4} {day_avg_speed_glo>4}mbit\n"
             day_msg += get_system_info()
             print(day_msg + "\n")
             send_telegram(day_msg_pre + day_msg)
