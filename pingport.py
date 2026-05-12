@@ -599,11 +599,12 @@ def get_os():
     return osinfo
 
 
-def get_system_info():
+def get_system_info(extended = True):
 
     s = f"{get_hostname()} uptime: {get_uptime()}\n"
-    s += f"platform: {get_platform()}\n"
-    s += f"os: {get_os()}\n"
+    if extended:
+        s += f"platform: {get_platform()}\n"
+        s += f"os: {get_os()}\n"
     s += "storage:\n"
     disks = get_all_storage_info()
     for d in disks:
@@ -751,7 +752,7 @@ def main():
             day_avg_speed_loc = round(DAY_DOWN_SPEED_LOC_TTL / DAY_DOWN_SPEED_LOC_CNY, 1)
             day_avg_speed_glo = round(DAY_DOWN_SPEED_GLO_TTL / DAY_DOWN_SPEED_GLO_CNY, 1)
             day_msg += f"avg: ping {day_avg_ping}, speed {day_avg_speed_loc} - {day_avg_speed_glo}\n"
-            day_msg += get_system_info()
+            day_msg += get_system_info(extended = False)
             print(day_msg + "\n")
             send_telegram(day_msg_pre + day_msg)
 
