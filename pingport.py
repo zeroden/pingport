@@ -39,14 +39,23 @@ PING_FAILS = 0
 PING_FAILS_STR = ""
 LAST_NEWLINE_INVERTED = ""
 ARGS = None
-DAY_PING_TIME_TTL = 0
-DAY_PING_TIME_CNT = 0
-DAY_DOWN_SPEED_LOC_TTL = 0
-DAY_DOWN_SPEED_LOC_CNT = 0
-DAY_DOWN_SPEED_GLO_TTL = 0
-DAY_DOWN_SPEED_GLO_CNT = 0
 SEND_TELEGRAM_FAILS = 0
 
+STATS =
+{
+    # total ping time for a day
+    day_ping_time_ttl: 0
+    # total ping counts for a day
+    day_ping_time_cnt: 0
+    # total local speed for a day
+    day_down_speed_loc_ttl: 0
+    # total local speed counts for a day
+    day_down_speed_loc_cnt: 0
+    # total global speed for a day
+    day_down_speed_glo_ttl: 0
+    # total global speed counts for a day
+    day_down_speed_glo_cnt: 0
+}
 
 if platform.system() == "Windows":
     # Get the handle of the current console window
@@ -195,7 +204,7 @@ def get_hostname():
 
 
 def show_download_speed(msg = ""):
-    global DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNT, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNT
+    global STATS
 
     if msg:
         msg = "%s, speed: " % msg
@@ -245,10 +254,10 @@ def show_download_speed(msg = ""):
 
     timedate_stamp = get_nice_timestamp()
     tg_msg = f"{get_hostname()} ▒ ping {ping:>3} ▒ speed {down_speed_1_2:>4} - {down_speed_3_4:>4}"
-    DAY_DOWN_SPEED_LOC_TTL += down_speed_1_2
-    DAY_DOWN_SPEED_LOC_CNT += 1
-    DAY_DOWN_SPEED_GLO_TTL += down_speed_3_4
-    DAY_DOWN_SPEED_GLO_CNT += 1
+    STATS["day_down_speed_loc_ttl"] += down_speed_1_2
+    STATS["day_down_speed_loc_cnt"] += 1
+    STATS["day_down_speed_glo_ttl"] += down_speed_3_4
+    STATS["day_down_speed_glo_cnt"] += 1
 
     down_speed_5 = 0
     if ARGS.enable_yt_speed:
@@ -361,14 +370,14 @@ def ping_host(host):
 
 
 def show_ping(host):
-    global DAY_PING_TIME_TTL, DAY_PING_TIME_CNT
+    global STATS
 
     timedate_stamp = get_nice_timestamp()
     # ping using classical ping
     ret_ping = ping_host(host)
     if ret_ping >= 0:
-        DAY_PING_TIME_TTL += ret_ping
-        DAY_PING_TIME_CNT += 1
+        STATS["day_ping_time_ttl"] += ret_ping
+        STATS["day_ping_time_cnt"] += 1
         print(Style.BRIGHT + Fore.GREEN + "%d" % ret_ping, end="")
     else:
         print(LAST_NEWLINE_INVERTED + Style.BRIGHT + Fore.RED + "%s ping down %d" % (timedate_stamp, PING_FAILS + 1))
@@ -620,7 +629,7 @@ def get_system_info(extended = True):
 
 
 def main():
-    global PING_FAILS, ARGS, DAY_PING_TIME_TTL, DAY_PING_TIME_CNT, DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNT, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNT
+    global PING_FAILS, ARGS, STATS
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--host-to-ping", help="Host for ping", required=True)
@@ -748,9 +757,9 @@ def main():
             day_msg_pre = f"{timedate_stamp} {get_hostname()} day{day_count}\n"
             print(LAST_NEWLINE_INVERTED + Style.BRIGHT + "\n" + day_msg_pre, end = "")
             day_msg = f"up: {partial}{perc}%, {day_ping_ok}/{day_ping_attempts} {PING_FAILS_STR}\n"
-            day_avg_ping = round(DAY_PING_TIME_TTL / DAY_PING_TIME_CNT, 1)
-            day_avg_speed_loc = round(DAY_DOWN_SPEED_LOC_TTL / DAY_DOWN_SPEED_LOC_CNT, 1)
-            day_avg_speed_glo = round(DAY_DOWN_SPEED_GLO_TTL / DAY_DOWN_SPEED_GLO_CNT, 1)
+            day_avg_ping = round(STATS["day_ping_time_ttl"] / STATS["day_ping_time_cnt"], 1)
+            day_avg_speed_loc = round(STATS["day_down_speed_loc_ttl"] / STATS["day_down_speed_loc_cnt"], 1)
+            day_avg_speed_glo = round(STATS["day_down_speed_glo_ttl"] / STATS["day_down_speed_glo_cnt"], 1)
             day_msg += f"avg: ping {day_avg_ping}, speed {day_avg_speed_loc} - {day_avg_speed_glo}\n"
             day_msg += get_system_info(extended = False)
             print(day_msg + "\n")
@@ -759,12 +768,12 @@ def main():
             # reset day counters
             day_ping_attempts = 0
             day_ping_ok = 0
-            DAY_PING_TIME_TTL = 0
-            DAY_PING_TIME_CNT += 0
-            DAY_DOWN_SPEED_LOC_TTL = 0
-            DAY_DOWN_SPEED_LOC_CNT = 0
-            DAY_DOWN_SPEED_GLO_TTL = 0
-            DAY_DOWN_SPEED_GLO_CNT = 0
+            STATS["day_ping_time_ttl"] = 0
+            STATS["day_ping_time_cnt"] += 0
+            STATS["day_down_speed_loc_ttl"] = 0
+            STATS["day_down_speed_loc_cnt"] = 0
+            STATS["day_down_speed_glo_ttl"] = 0
+            STATS["day_down_speed_glo_cnt"] = 0
 
         day_ping_attempts += 1
 
