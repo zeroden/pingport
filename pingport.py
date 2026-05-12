@@ -42,9 +42,9 @@ ARGS = None
 DAY_PING_TIME_TTL = 0
 DAY_PING_TIME_CNT = 0
 DAY_DOWN_SPEED_LOC_TTL = 0
-DAY_DOWN_SPEED_LOC_CNY = 0
+DAY_DOWN_SPEED_LOC_CNT = 0
 DAY_DOWN_SPEED_GLO_TTL = 0
-DAY_DOWN_SPEED_GLO_CNY = 0
+DAY_DOWN_SPEED_GLO_CNT = 0
 SEND_TELEGRAM_FAILS = 0
 
 
@@ -195,7 +195,7 @@ def get_hostname():
 
 
 def show_download_speed(msg = ""):
-    global DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNY, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNY
+    global DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNT, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNT
 
     if msg:
         msg = "%s, speed: " % msg
@@ -246,9 +246,9 @@ def show_download_speed(msg = ""):
     timedate_stamp = get_nice_timestamp()
     tg_msg = f"{get_hostname()} ▒ ping {ping:>3} ▒ speed {down_speed_1_2:>4} - {down_speed_3_4:>4}"
     DAY_DOWN_SPEED_LOC_TTL += down_speed_1_2
-    DAY_DOWN_SPEED_LOC_CNY += 1
+    DAY_DOWN_SPEED_LOC_CNT += 1
     DAY_DOWN_SPEED_GLO_TTL += down_speed_3_4
-    DAY_DOWN_SPEED_GLO_CNY += 1
+    DAY_DOWN_SPEED_GLO_CNT += 1
 
     down_speed_5 = 0
     if ARGS.enable_yt_speed:
@@ -620,7 +620,7 @@ def get_system_info(extended = True):
 
 
 def main():
-    global PING_FAILS, ARGS, DAY_PING_TIME_TTL, DAY_PING_TIME_CNT, DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNY, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNY
+    global PING_FAILS, ARGS, DAY_PING_TIME_TTL, DAY_PING_TIME_CNT, DAY_DOWN_SPEED_LOC_TTL, DAY_DOWN_SPEED_LOC_CNT, DAY_DOWN_SPEED_GLO_TTL, DAY_DOWN_SPEED_GLO_CNT
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--host-to-ping", help="Host for ping", required=True)
@@ -749,8 +749,8 @@ def main():
             print(LAST_NEWLINE_INVERTED + Style.BRIGHT + "\n" + day_msg_pre, end = "")
             day_msg = f"up: {partial}{perc}%, {day_ping_ok}/{day_ping_attempts} {PING_FAILS_STR}\n"
             day_avg_ping = round(DAY_PING_TIME_TTL / DAY_PING_TIME_CNT, 1)
-            day_avg_speed_loc = round(DAY_DOWN_SPEED_LOC_TTL / DAY_DOWN_SPEED_LOC_CNY, 1)
-            day_avg_speed_glo = round(DAY_DOWN_SPEED_GLO_TTL / DAY_DOWN_SPEED_GLO_CNY, 1)
+            day_avg_speed_loc = round(DAY_DOWN_SPEED_LOC_TTL / DAY_DOWN_SPEED_LOC_CNT, 1)
+            day_avg_speed_glo = round(DAY_DOWN_SPEED_GLO_TTL / DAY_DOWN_SPEED_GLO_CNT, 1)
             day_msg += f"avg: ping {day_avg_ping}, speed {day_avg_speed_loc} - {day_avg_speed_glo}\n"
             day_msg += get_system_info(extended = False)
             print(day_msg + "\n")
@@ -762,9 +762,9 @@ def main():
             DAY_PING_TIME_TTL = 0
             DAY_PING_TIME_CNT += 0
             DAY_DOWN_SPEED_LOC_TTL = 0
-            DAY_DOWN_SPEED_LOC_CNY = 0
+            DAY_DOWN_SPEED_LOC_CNT = 0
             DAY_DOWN_SPEED_GLO_TTL = 0
-            DAY_DOWN_SPEED_GLO_CNY = 0
+            DAY_DOWN_SPEED_GLO_CNT = 0
 
         day_ping_attempts += 1
 
