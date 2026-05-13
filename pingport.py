@@ -326,10 +326,13 @@ def show_download_speed(msg = ""):
     with open(speed_file, "a") as myfile:
         myfile.write(f"{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n")
 
-ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+if platform.system() == "Windows":
+    ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 def remove_ansi(text):
-    return ansi_escape.sub('', text)
-    
+    if platform.system() == "Windows":
+        return ansi_escape.sub('', text)
+    return text
+   
 def dupe_console_to_file(filepath):
     class Logger(object):
         def __init__(self):
@@ -647,6 +650,7 @@ def get_windows_os():
         return f"{win} {rel} (build {build})"
     except:
         return f"{win} {rel} | Version {ver}"
+
 
 def get_os():
     if os.name == "posix":
