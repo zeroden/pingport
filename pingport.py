@@ -326,7 +326,10 @@ def show_download_speed(msg = ""):
     with open(speed_file, "a") as myfile:
         myfile.write(f"{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n")
 
-
+ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+def remove_ansi(text):
+    return ansi_escape.sub('', text)
+    
 def dupe_console_to_file(filepath):
     class Logger(object):
         def __init__(self):
@@ -336,6 +339,7 @@ def dupe_console_to_file(filepath):
         def write(self, message):
             self.prevstdout.write(message)
             self.prevstdout.flush()
+            message = remove_ansi(message)
             self.logfile.write(message.encode())
             self.logfile.flush()
             global LAST_NEWLINE_INVERTED
