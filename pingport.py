@@ -801,8 +801,7 @@ def main():
 
         # Check if 24 hours have passed
         # print day stat
-        #if current_time - last_24hours_mark >= 24 * 60 * 60:
-        if current_time - last_24hours_mark >= 1 * 60 * 60:
+        if current_time - last_24hours_mark >= 24 * 60 * 60:
             # reset day marker
             last_24hours_mark = current_time
             day_count += 1
