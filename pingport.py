@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.4"
+PINGPORT_VERSION = "v0.5"
 
 import socket
 import time
@@ -370,7 +370,10 @@ def get_percentage(whole, part):
         perc = 100 * float(part) / float(whole)
     else:
         perc = 0
-    return str(round(perc, 2))
+        
+    perc = round(perc, 2)
+    perc = f"{perc:.2f}".rstrip('0').rstrip('.')
+    return perc
 
 
 def custom_sleep(i):
@@ -817,18 +820,18 @@ def main():
             day_avg_speed_glo = round(STATS["day_speed_glo_sum"] / STATS["day_speed_glo_count"], 1)
             day_msg += f"avg ping: {day_avg_ping}\n"
             if STATS['day_ping_max']:
-                day_msg += f"max ping: {STATS['day_ping_max']} @ {STATS['day_ping_max_time'].strftime('%H:%M')}\n"
+                day_msg += f"max ping: {STATS['day_ping_max']} @ {STATS['day_ping_max_time'].strftime('%d-%H:%M')}\n"
             if STATS['day_ping_min']:
-                day_msg += f"min ping: {STATS['day_ping_min']} @ {STATS['day_ping_min_time'].strftime('%H:%M')}\n"
+                day_msg += f"min ping: {STATS['day_ping_min']} @ {STATS['day_ping_min_time'].strftime('%d-%H:%M')}\n"
             day_msg += f"avg speed: {day_avg_speed_loc} / {day_avg_speed_glo}\n"
             if STATS['day_speed_loc_max']:
-                day_msg += f"max loc speed: {STATS['day_speed_loc_max']} @ {STATS['day_speed_loc_max_time'].strftime('%H:%M')}\n"
+                day_msg += f"max loc speed: {STATS['day_speed_loc_max']} @ {STATS['day_speed_loc_max_time'].strftime('%d-%H:%M')}\n"
             if STATS['day_speed_loc_min']:
-                day_msg += f"min loc speed: {STATS['day_speed_loc_min']} @ {STATS['day_speed_loc_min_time'].strftime('%H:%M')}\n"
+                day_msg += f"min loc speed: {STATS['day_speed_loc_min']} @ {STATS['day_speed_loc_min_time'].strftime('%d-%H:%M')}\n"
             if STATS['day_speed_glo_max']:
-                day_msg += f"max glo speed: {STATS['day_speed_glo_max']} @ {STATS['day_speed_glo_max_time'].strftime('%H:%M')}\n"
+                day_msg += f"max glo speed: {STATS['day_speed_glo_max']} @ {STATS['day_speed_glo_max_time'].strftime('%d-%H:%M')}\n"
             if STATS['day_speed_glo_min']:
-                day_msg += f"min glo speed: {STATS['day_speed_glo_min']} @ {STATS['day_speed_glo_min_time'].strftime('%H:%M')}\n"
+                day_msg += f"min glo speed: {STATS['day_speed_glo_min']} @ {STATS['day_speed_glo_min_time'].strftime('%d-%H:%M')}\n"
             day_msg += get_system_info(extended = False)
             print(day_msg + "\n")
             send_telegram(day_msg_pre + day_msg)
