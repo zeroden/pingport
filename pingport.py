@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.5"
+PINGPORT_VERSION = "v0.51"
 
 import socket
 import time
@@ -42,6 +42,7 @@ ARGS = None
 SEND_TELEGRAM_FAILS = 0
 
 STATS = {
+    # DAY STAT
     # total ping time for a day
     "day_ping_sum" : 0,
     # total ping counts for a day
@@ -49,12 +50,12 @@ STATS = {
     # max day ping
     "day_ping_max" : 0,
     # max day ping time
-    "day_ping_max_time" : 0,
+    "day_ping_max_time" : datetime.datetime.min,
     # min day ping
     "day_ping_min" : 0,
     # min day ping time
-    "day_ping_min_time" : 0,
-
+    "day_ping_min_time" : datetime.datetime.min,
+    #
     # total local speed for a day
     "day_speed_loc_sum" : 0,
     # total local speed counts for a day
@@ -62,12 +63,12 @@ STATS = {
     # day max local speed
     "day_speed_loc_max" : 0,
     # day max local speed time
-    "day_speed_loc_max_time" : 0,
+    "day_speed_loc_max_time" : datetime.datetime.min,
     # day min local speed
     "day_speed_loc_min" : 0,
     # day min local speed time
-    "day_speed_loc_min_time" : 0,
-
+    "day_speed_loc_min_time" : datetime.datetime.min,
+    #
     # total global speed for a day
     "day_speed_glo_sum" : 0,
     # total global speed counts for a day
@@ -75,11 +76,51 @@ STATS = {
     # day max global speed
     "day_speed_glo_max" : 0,
     # day max global speed time
-    "day_speed_glo_max_time" : 0,
+    "day_speed_glo_max_time" : datetime.datetime.min,
     # day min global speed
     "day_speed_glo_min" : 0,
     # day min global speed time
-    "day_speed_glo_min_time" : 0
+    "day_speed_glo_min_time" : datetime.datetime.min,
+
+    # ALL STAT
+    # total ping time for all time
+    "all_ping_sum" : 0,
+    # total ping counts for all time
+    "all_ping_count" : 0,
+    # max all ping
+    "all_ping_max" : 0,
+    # max all ping time
+    "all_ping_max_time" : datetime.datetime.min,
+    # min all ping
+    "all_ping_min" : 0,
+    # min all ping time
+    "all_ping_min_time" : datetime.datetime.min,
+    #
+    # total local speed for all
+    "all_speed_loc_sum" : 0,
+    # total local speed counts for all
+    "all_speed_loc_count" : 0,
+    # all max local speed
+    "all_speed_loc_max" : 0,
+    # all max local speed time
+    "all_speed_loc_max_time" : datetime.datetime.min,
+    # all min local speed
+    "all_speed_loc_min" : 0,
+    # all min local speed time
+    "all_speed_loc_min_time" : datetime.datetime.min,
+    #
+    # total global speed for all time
+    "all_speed_glo_sum" : 0,
+    # total global speed counts for all time
+    "all_speed_glo_count" : 0,
+    # all max global speed
+    "all_speed_glo_max" : 0,
+    # all max global speed time
+    "all_speed_glo_max_time" : datetime.datetime.min,
+    # all min global speed
+    "all_speed_glo_min" : 0,
+    # all min global speed time
+    "all_speed_glo_min_time" : datetime.datetime.min
 }
 
 if platform.system() == "Windows":
@@ -284,21 +325,37 @@ def show_download_speed(msg = ""):
 
     STATS["day_speed_loc_sum"] += down_speed_1_2
     STATS["day_speed_loc_count"] += 1
-    if down_speed_1_2 > STATS["day_speed_loc_max"]:
+    STATS["all_speed_loc_sum"] += down_speed_1_2
+    STATS["all_speed_loc_count"] += 1
+    if down_speed_1_2 >= STATS["day_speed_loc_max"]:
         STATS["day_speed_loc_max"] = down_speed_1_2
         STATS["day_speed_loc_max_time"] = datetime.datetime.now()
-    if down_speed_1_2 < STATS["day_speed_loc_min"] or not STATS["day_speed_loc_min"]:
+    if down_speed_1_2 >= STATS["all_speed_loc_max"]:
+        STATS["all_speed_loc_max"] = down_speed_1_2
+        STATS["all_speed_loc_max_time"] = datetime.datetime.now()
+    if down_speed_1_2 > 0 and (down_speed_1_2 <= STATS["day_speed_loc_min"] or STATS["day_speed_loc_min_time"] == datetime.datetime.min):
         STATS["day_speed_loc_min"] = down_speed_1_2
         STATS["day_speed_loc_min_time"] = datetime.datetime.now()
+    if down_speed_1_2 > 0 and (down_speed_1_2 <= STATS["all_speed_loc_min"] or STATS["all_speed_loc_min_time"] == datetime.datetime.min):
+        STATS["all_speed_loc_min"] = down_speed_1_2
+        STATS["all_speed_loc_min_time"] = datetime.datetime.now()
 
     STATS["day_speed_glo_sum"] += down_speed_3_4
     STATS["day_speed_glo_count"] += 1
-    if down_speed_3_4 > STATS["day_speed_glo_max"]:
+    STATS["all_speed_glo_sum"] += down_speed_3_4
+    STATS["all_speed_glo_count"] += 1
+    if down_speed_3_4 >= STATS["day_speed_glo_max"]:
         STATS["day_speed_glo_max"] = down_speed_3_4
         STATS["day_speed_glo_max_time"] = datetime.datetime.now()
-    if down_speed_3_4 < STATS["day_speed_glo_min"] or not STATS["day_speed_glo_min"]:
+    if down_speed_3_4 >= STATS["all_speed_glo_max"]:
+        STATS["all_speed_glo_max"] = down_speed_3_4
+        STATS["all_speed_glo_max_time"] = datetime.datetime.now()
+    if down_speed_3_4 > 0 and (down_speed_3_4 <= STATS["day_speed_glo_min"] or STATS["day_speed_glo_min_time"] == datetime.datetime.min):
         STATS["day_speed_glo_min"] = down_speed_3_4
         STATS["day_speed_glo_min_time"] = datetime.datetime.now()
+    if down_speed_3_4 > 0 and (down_speed_3_4 <= STATS["all_speed_glo_min"] or STATS["all_speed_glo_min_time"] == datetime.datetime.min):
+        STATS["all_speed_glo_min"] = down_speed_3_4
+        STATS["all_speed_glo_min_time"] = datetime.datetime.now()
 
     down_speed_5 = 0
     if ARGS.enable_yt_speed:
@@ -429,12 +486,20 @@ def show_ping(host):
     if ret_ping >= 0:
         STATS["day_ping_sum"] += ret_ping
         STATS["day_ping_count"] += 1
-        if ret_ping > STATS["day_ping_max"]:
+        STATS["all_ping_sum"] += ret_ping
+        STATS["all_ping_count"] += 1
+        if ret_ping >= STATS["day_ping_max"]:
             STATS["day_ping_max"] = ret_ping
             STATS["day_ping_max_time"] = datetime.datetime.now()
-        if ret_ping < STATS["day_ping_min"] or not STATS["day_ping_min"]:
+        if ret_ping >= STATS["all_ping_max"]:
+            STATS["all_ping_max"] = ret_ping
+            STATS["all_ping_max_time"] = datetime.datetime.now()
+        if ret_ping > 0 and (ret_ping <= STATS["day_ping_min"] or STATS["day_ping_min_time"] == datetime.datetime.min):
             STATS["day_ping_min"] = ret_ping
             STATS["day_ping_min_time"] = datetime.datetime.now()
+        if ret_ping > 0 and (ret_ping <= STATS["all_ping_min"] or STATS["all_ping_min_time"] == datetime.datetime.min):
+            STATS["all_ping_min"] = ret_ping
+            STATS["all_ping_min_time"] = datetime.datetime.now()
         print(Style.BRIGHT + Fore.GREEN + "%d" % ret_ping, end="")
     else:
         print(LAST_NEWLINE_INVERTED + Style.BRIGHT + Fore.RED + "%s ping down %d" % (timedate_stamp, PING_FAILS + 1))
@@ -705,7 +770,7 @@ def main():
 
     logfilename = get_nice_timestamp("pingport_%Y%m%d_%H%M%S.log")
     dupe_console_to_file(logfilename)
-    timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
+    timedate_stamp = get_nice_timestamp("%Y-%m-%d*%H:%M:%S")
     hostname = get_hostname()
 
     tg_msg = (s := f"pingport {PINGPORT_VERSION} started @ {hostname}") + "\n"
@@ -766,7 +831,7 @@ def main():
 
     sys_info = get_system_info()
     print(sys_info)
-    timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
+    timedate_stamp = get_nice_timestamp("%Y-%m-%d*%H:%M:%S")
     send_telegram(timedate_stamp + " " + sys_info)
     if platform.system() == "Windows":
         print("Press F1 for a manual ping, F2 for manual speed test\n")
@@ -783,7 +848,7 @@ def main():
     day_ping_ok = 0
 
     while True:
-        timedate_stamp = get_nice_timestamp("[%Y-%m-%d %H:%M:%S]")
+        timedate_stamp = get_nice_timestamp("%Y-%m-%d*%H:%M:%S")
         current_time = time.time()
 
         # Check if 60 minutes have passed
@@ -792,10 +857,9 @@ def main():
             last_60min_mark = current_time
             hour_count += 1
             if hours_passed >= 2:
-                hours_msg = "+%d hours slept" % hours_passed
+                hours_msg = f"{hostname} slept {hours_passed} hours"
                 print(LAST_NEWLINE_INVERTED + Style.BRIGHT + hours_msg)
-                print("\n\n\n")
-                hours_msg += " (%s)" % hostname
+                print("\n\n")
                 send_telegram(hours_msg)
                 # wait some time after unsleep to allow network up
                 custom_sleep(10)
@@ -814,24 +878,21 @@ def main():
                 partial = "partial "
             day_msg_pre = f"{timedate_stamp} {get_hostname()} day{day_count}\n"
             print(LAST_NEWLINE_INVERTED + Style.BRIGHT + "\n" + day_msg_pre, end = "")
-            day_msg = f"up: {partial}{perc}%, {day_ping_ok}/{day_ping_attempts} {PING_FAILS_STR}\n"
+            day_msg = f"up: {partial}{perc}%, {day_ping_ok} outof {day_ping_attempts} {PING_FAILS_STR}\n"
             day_avg_ping = round(STATS["day_ping_sum"] / STATS["day_ping_count"])
+            all_avg_ping = round(STATS["all_ping_sum"] / STATS["all_ping_count"])
             day_avg_speed_loc = round(STATS["day_speed_loc_sum"] / STATS["day_speed_loc_count"], 1)
             day_avg_speed_glo = round(STATS["day_speed_glo_sum"] / STATS["day_speed_glo_count"], 1)
-            day_msg += f"avg ping: {day_avg_ping}\n"
-            if STATS['day_ping_max']:
-                day_msg += f"max ping: {STATS['day_ping_max']} @ {STATS['day_ping_max_time'].strftime('%d-%H:%M')}\n"
-            if STATS['day_ping_min']:
-                day_msg += f"min ping: {STATS['day_ping_min']} @ {STATS['day_ping_min_time'].strftime('%d-%H:%M')}\n"
-            day_msg += f"avg speed: {day_avg_speed_loc} / {day_avg_speed_glo}\n"
-            if STATS['day_speed_loc_max']:
-                day_msg += f"max loc speed: {STATS['day_speed_loc_max']} @ {STATS['day_speed_loc_max_time'].strftime('%d-%H:%M')}\n"
-            if STATS['day_speed_loc_min']:
-                day_msg += f"min loc speed: {STATS['day_speed_loc_min']} @ {STATS['day_speed_loc_min_time'].strftime('%d-%H:%M')}\n"
-            if STATS['day_speed_glo_max']:
-                day_msg += f"max glo speed: {STATS['day_speed_glo_max']} @ {STATS['day_speed_glo_max_time'].strftime('%d-%H:%M')}\n"
-            if STATS['day_speed_glo_min']:
-                day_msg += f"min glo speed: {STATS['day_speed_glo_min']} @ {STATS['day_speed_glo_min_time'].strftime('%d-%H:%M')}\n"
+            all_avg_speed_loc = round(STATS["all_speed_loc_sum"] / STATS["all_speed_loc_count"], 1)
+            all_avg_speed_glo = round(STATS["all_speed_glo_sum"] / STATS["all_speed_glo_count"], 1)
+            day_msg += f"avg ping: {day_avg_ping} ({all_avg_ping})\n"
+            day_msg += f"bst ping: {STATS['day_ping_min']} @ {STATS['day_ping_min_time'].strftime('%H:%M')} ({STATS['all_ping_min']} @ {STATS['all_ping_min_time'].strftime('%m-%d*%H:%M')})\n"
+            day_msg += f"wst ping: {STATS['day_ping_max']} @ {STATS['day_ping_max_time'].strftime('%H:%M')} ({STATS['all_ping_max']} @ {STATS['all_ping_max_time'].strftime('%m-%d*%H:%M')})\n"
+            day_msg += f"avg  speed: {day_avg_speed_loc} / {day_avg_speed_glo} ({all_avg_speed_loc} / {all_avg_speed_glo})\n"
+            day_msg += f"max lspeed: {STATS['day_speed_loc_max']} @ {STATS['day_speed_loc_max_time'].strftime('%H:%M')} ({STATS['all_speed_loc_max']} @ {STATS['all_speed_loc_max_time'].strftime('%m-%d*%H:%M')})\n"
+            day_msg += f"min lspeed: {STATS['day_speed_loc_min']} @ {STATS['day_speed_loc_min_time'].strftime('%H:%M')} ({STATS['all_speed_loc_min']} @ {STATS['all_speed_loc_min_time'].strftime('%m-%d*%H:%M')})\n"
+            day_msg += f"max gspeed: {STATS['day_speed_glo_max']} @ {STATS['day_speed_glo_max_time'].strftime('%H:%M')} ({STATS['all_speed_glo_max']} @ {STATS['all_speed_glo_max_time'].strftime('%m-%d*%H:%M')})\n"
+            day_msg += f"min gspeed: {STATS['day_speed_glo_min']} @ {STATS['day_speed_glo_min_time'].strftime('%H:%M')} ({STATS['all_speed_glo_min']} @ {STATS['all_speed_glo_min_time'].strftime('%m-%d*%H:%M')})\n"
             day_msg += get_system_info(extended = False)
             print(day_msg + "\n")
             send_telegram(day_msg_pre + day_msg)
@@ -845,12 +906,18 @@ def main():
             STATS["day_speed_loc_count"] = 0
             STATS["day_speed_glo_sum"] = 0
             STATS["day_speed_glo_count"] = 0
-            STATS['day_ping_max'] = 0
-            STATS['day_ping_min'] = 0
-            STATS['day_speed_loc_max'] = 0
-            STATS['day_speed_glo_max'] = 0
-            STATS['day_speed_loc_min'] = 0
-            STATS['day_speed_glo_min'] = 0
+            STATS["day_ping_max"] = 0
+            STATS["day_ping_min"] = 0
+            STATS["day_speed_loc_max"] = 0
+            STATS["day_speed_glo_max"] = 0
+            STATS["day_speed_loc_min"] = 0
+            STATS["day_speed_glo_min"] = 0
+            STATS["day_ping_max_time"] = datetime.datetime.min
+            STATS["day_ping_min_time"] = datetime.datetime.min
+            STATS["day_speed_loc_max_time"] = datetime.datetime.min
+            STATS["day_speed_loc_min_time"] = datetime.datetime.min
+            STATS["day_speed_glo_max_time"] = datetime.datetime.min
+            STATS["day_speed_glo_min_time"] = datetime.datetime.min
 
         day_ping_attempts += 1
 
