@@ -212,7 +212,7 @@ def test_download_speed(url):
     return down_speed_byte * 8
 
 
-def get_nice_timestamp(fmt="%Y-%m-%d %H:%M:%S", t=None):
+def get_nice_timestamp(fmt="%Y-%m-%d*%H:%M:%S", t=None):
     t = time.localtime(t)  # use current local time to convert float timestamp to struct_time
     return time.strftime(fmt, t)
 
@@ -234,11 +234,11 @@ def send_telegram_worker(text, parse_mode=None):
             data["parse_mode"] = parse_mode
         response = requests.post(api_url, data=data)
         if not response.ok:
-            print(f"[{get_nice_timestamp()}] ," + f"Telegram error: {response.status_code} - {response.text}")
+            print(f"{get_nice_timestamp()} ," + f"Telegram error: {response.status_code} - {response.text}")
             return False
         return True
     except Exception as e:
-        msg = f"[{get_nice_timestamp()}] ," + f"Error sending Telegram message: {e}"
+        msg = f"{get_nice_timestamp()} ," + f"Error sending Telegram message: {e}"
         print(msg)
         return False
 
@@ -770,7 +770,7 @@ def main():
 
     logfilename = get_nice_timestamp("pingport_%Y%m%d_%H%M%S.log")
     dupe_console_to_file(logfilename)
-    timedate_stamp = get_nice_timestamp("%Y-%m-%d*%H:%M:%S")
+    timedate_stamp = get_nice_timestamp()
     hostname = get_hostname()
 
     tg_msg = (s := f"pingport {PINGPORT_VERSION} started @ {hostname}") + "\n"
@@ -831,7 +831,7 @@ def main():
 
     sys_info = get_system_info()
     print(sys_info)
-    timedate_stamp = get_nice_timestamp("%Y-%m-%d*%H:%M:%S")
+    timedate_stamp = get_nice_timestamp()
     send_telegram(timedate_stamp + " " + sys_info)
     if platform.system() == "Windows":
         print("Press F1 for a manual ping, F2 for manual speed test\n")
@@ -848,7 +848,7 @@ def main():
     day_ping_ok = 0
 
     while True:
-        timedate_stamp = get_nice_timestamp("%Y-%m-%d*%H:%M:%S")
+        timedate_stamp = get_nice_timestamp()
         current_time = time.time()
 
         # Check if 60 minutes have passed
@@ -926,7 +926,7 @@ def main():
         if result:
             day_ping_ok += 1
             if first_offline_time:
-                offline_msg = f"[{get_nice_timestamp(t=first_offline_time)}] {hostname} offline\n"
+                offline_msg = f"{get_nice_timestamp(t=first_offline_time)} {hostname} offline\n"
                 offline_time_dur_raw = current_time - first_offline_time
                 # reset offline period
                 first_offline_time = 0
