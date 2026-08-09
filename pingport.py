@@ -81,6 +81,12 @@ STATS = {
     "day_speed_glo_min" : 0,
     # day min global speed time
     "day_speed_glo_min_time" : datetime.datetime.min,
+    # how many offline event during day
+    "day_down_count" : 0,
+    # longest offline duration during day
+    "day_down_longest" : 0,
+    # time of longest offline
+    "day_down_longest_time" : datetime.datetime.min,
 
     # ALL STAT
     # total ping time for all time
@@ -120,7 +126,11 @@ STATS = {
     # all min global speed
     "all_speed_glo_min" : 0,
     # all min global speed time
-    "all_speed_glo_min_time" : datetime.datetime.min
+    "all_speed_glo_min_time" : datetime.datetime.min,
+    # longest offline duration
+    "all_down_longest" : 0,
+    # time of longest offline
+    "all_down_longest_time" : datetime.datetime.min,
 }
 
 if platform.system() == "Windows":
@@ -217,9 +227,16 @@ def get_nice_timestamp(fmt="%Y-%m-%d*%H:%M:%S", t=None):
     return time.strftime(fmt, t)
 
 
-def send_telegram_worker(text, parse_mode=None):
+def send_telegram_worker(text, parse_mode=None, target_channel=1):
     if not ARGS.telegram_update:
         return True
+    channel1 = ARGS.telegram_update
+
+    # if no second channel specified use first channel
+    if ARGS.telegram_update_2:
+        channel2 = ARGS.telegram_update_2
+    else:
+        channel2 = channel1
 
     try:
         # truncated if too long
@@ -227,7 +244,10 @@ def send_telegram_worker(text, parse_mode=None):
         if len(text) > max_length:
             text = text[:max_length - 3] + "..."  # Add ellipsis to indicate truncation
 
-        bot_token, bot_chat_id = ARGS.telegram_update.split(";")
+        if target_channel == 1:
+            bot_token, bot_chat_id = channel1.split(";")
+        else:
+            bot_token, bot_chat_id = channel2.split(";")
         api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
         data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True}
         if parse_mode:
@@ -243,21 +263,21 @@ def send_telegram_worker(text, parse_mode=None):
         return False
 
 
-def send_telegram(text, parse_mode=None):
+def send_telegram(text, parse_mode=None, target_channel=1):
     global SEND_TELEGRAM_FAILS
 
     if SEND_TELEGRAM_FAILS:
         text += f"\n(tg fails {SEND_TELEGRAM_FAILS})"
 
-    ret = send_telegram_worker(text, parse_mode)
+    ret = send_telegram_worker(text, parse_mode, target_channel)
     if not ret:
         print("tg try 2")
         custom_sleep(10)
-        ret = send_telegram_worker(text, parse_mode)
+        ret = send_telegram_worker(text, parse_mode, target_channel)
         if not ret:
             print("tg try 3")
             custom_sleep(60)
-            ret = send_telegram_worker(text, parse_mode)
+            ret = send_telegram_worker(text, parse_mode, target_channel)
 
     if ret:
         SEND_TELEGRAM_FAILS = 0
@@ -762,6 +782,7 @@ def main():
     parser.add_argument("--global-url2", help="Global speed test URL 2 (optional)")
     parser.add_argument("--enable-yt-speed", action="store_true", help="Enable youtube speed test (optional)")
     parser.add_argument("--telegram-update", help="Send data to telegram bot (optional)")
+    parser.add_argument("--telegram-update_2", help="Send data to telegram bot 2 (optional)")
     parser.add_argument("--offline-short-cmd", help="Run command on short offline time (optional)")
     parser.add_argument("--offline-long-cmd", help="Run command on long offline time (optional)")
     parser.add_argument("--offline-short-timeout", help="Short offline command timeout in seconds (optional)", type=int, default=300)
@@ -893,6 +914,7 @@ def main():
             day_msg += f"min lspeed: {STATS['day_speed_loc_min']} @ {STATS['day_speed_loc_min_time'].strftime('%H:%M')} ({STATS['all_speed_loc_min']} @ {STATS['all_speed_loc_min_time'].strftime('%m-%d*%H:%M')})\n"
             day_msg += f"max gspeed: {STATS['day_speed_glo_max']} @ {STATS['day_speed_glo_max_time'].strftime('%H:%M')} ({STATS['all_speed_glo_max']} @ {STATS['all_speed_glo_max_time'].strftime('%m-%d*%H:%M')})\n"
             day_msg += f"min gspeed: {STATS['day_speed_glo_min']} @ {STATS['day_speed_glo_min_time'].strftime('%H:%M')} ({STATS['all_speed_glo_min']} @ {STATS['all_speed_glo_min_time'].strftime('%m-%d*%H:%M')})\n"
+            day_msg += f"offline: {STATS['day_down_count']}, {nice_duration(STATS['day_down_longest'])} @ {STATS['day_down_longest_time'].strftime('%H:%M')} ({STATS['all_down_longest']} @ {STATS['all_down_longest_time'].strftime('%m-%d*%H:%M')})\n"
             day_msg += get_system_info(extended = False)
             print(day_msg + "\n")
             send_telegram(day_msg_pre + day_msg)
@@ -918,6 +940,9 @@ def main():
             STATS["day_speed_loc_min_time"] = datetime.datetime.min
             STATS["day_speed_glo_max_time"] = datetime.datetime.min
             STATS["day_speed_glo_min_time"] = datetime.datetime.min
+            STATS["day_down_count"] = 0
+            STATS["day_down_longest"] = 0
+            STATS["day_down_longest_time"] = datetime.datetime.min
 
         day_ping_attempts += 1
 
@@ -926,7 +951,7 @@ def main():
         if result:
             day_ping_ok += 1
             if first_offline_time:
-                offline_msg = f"{get_nice_timestamp(t=first_offline_time)} {hostname} offline\n"
+                offline_msg = f"{hostname} availability\n{get_nice_timestamp(t=first_offline_time)} offline\n"
                 offline_time_dur_raw = current_time - first_offline_time
                 # reset offline period
                 first_offline_time = 0
@@ -934,9 +959,16 @@ def main():
                 offline_short_cmd_executed = False
                 offline_long_cmd_executed = False
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
-                offline_msg += f"{timedate_stamp} online, downtime {offline_time_dur_nice}"
+                offline_msg += f"{timedate_stamp} online\ndowntime is {offline_time_dur_nice}"
+                STATS["day_down_count"] += 1
+                if offline_time_dur_raw > STATS["day_down_longest"]:
+                    STATS["day_down_longest"] = offline_time_dur_raw
+                    STATS["day_down_longest_time"] = datetime.datetime.now()
+                if offline_time_dur_raw > STATS["all_down_longest"]:
+                    STATS["all_down_longest"] = offline_time_dur_raw
+                    STATS["all_down_longest_time"] = datetime.datetime.now()
                 print("\n" + offline_msg)
-                send_telegram(offline_msg)
+                send_telegram(offline_msg, target_channel=2)
         # in case of ping fail check if offline command needed
         else:
             PING_FAILS += 1
