@@ -900,6 +900,7 @@ def main():
             day_msg_pre = f"{timedate_stamp} {get_hostname()} day{day_count}\n"
             print(LAST_NEWLINE_INVERTED + Style.BRIGHT + "\n" + day_msg_pre, end = "")
             day_msg = f"up: {partial}{perc}%, {day_ping_ok} outof {day_ping_attempts} {PING_FAILS_STR}\n"
+            day_msg += f"offline: {STATS['day_down_count']}, {nice_duration(STATS['day_down_longest'])} @ {STATS['day_down_longest_time'].strftime('%H:%M')} ({nice_duration(STATS['all_down_longest'])} @ {STATS['all_down_longest_time'].strftime('%m-%d*%H:%M')})\n"
             day_avg_ping = round(STATS["day_ping_sum"] / STATS["day_ping_count"])
             all_avg_ping = round(STATS["all_ping_sum"] / STATS["all_ping_count"])
             day_avg_speed_loc = round(STATS["day_speed_loc_sum"] / STATS["day_speed_loc_count"], 1)
@@ -914,7 +915,6 @@ def main():
             day_msg += f"min lspeed: {STATS['day_speed_loc_min']} @ {STATS['day_speed_loc_min_time'].strftime('%H:%M')} ({STATS['all_speed_loc_min']} @ {STATS['all_speed_loc_min_time'].strftime('%m-%d*%H:%M')})\n"
             day_msg += f"max gspeed: {STATS['day_speed_glo_max']} @ {STATS['day_speed_glo_max_time'].strftime('%H:%M')} ({STATS['all_speed_glo_max']} @ {STATS['all_speed_glo_max_time'].strftime('%m-%d*%H:%M')})\n"
             day_msg += f"min gspeed: {STATS['day_speed_glo_min']} @ {STATS['day_speed_glo_min_time'].strftime('%H:%M')} ({STATS['all_speed_glo_min']} @ {STATS['all_speed_glo_min_time'].strftime('%m-%d*%H:%M')})\n"
-            day_msg += f"offline: {STATS['day_down_count']}, {nice_duration(STATS['day_down_longest'])} @ {STATS['day_down_longest_time'].strftime('%H:%M')} ({STATS['all_down_longest']} @ {STATS['all_down_longest_time'].strftime('%m-%d*%H:%M')})\n"
             day_msg += get_system_info(extended = False)
             print(day_msg + "\n")
             send_telegram(day_msg_pre + day_msg)
