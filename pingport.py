@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.51"
+PINGPORT_VERSION = "v0.52"
 
 import socket
 import time
@@ -194,32 +194,37 @@ def test_download_speed(url):
     anti_cache_stamp = random.randint(0, 0xFFFFFFFF)
     url = url + "?x=%s" % anti_cache_stamp
 
-    start_time = time.time()
+    start_time = time.monotonic()
+    total_bytes = 0
+    max_duration=600
+
     try:
-        response = requests.get(url, stream=True)
-        total_length = response.headers.get("content-length")
-        if total_length is None:
-            data = response.content
-        else:
-            dl = 0
-            data = bytearray()
-            total_length = int(total_length)
+        with requests.get(url, stream=True, timeout=(30, 60)) as response:
+            # checks the HTTP status code and raises an exception if the server returned an error
+            response.raise_for_status()
+
             for chunk in response.iter_content(chunk_size=4096):
-                dl += len(chunk)
-                data.extend(chunk)
-    except Exception as e:
-        print("test_download_speed.requests.get(%s) failed [%s]" % (url, e))
+                if chunk:
+                    total_bytes += len(chunk)
+
+                if time.monotonic() - start_time >= max_duration:
+                    print("test_download_speed: maximum duration reached")
+                    break
+
+    except requests.exceptions.Timeout as e:
+        print("test_download_speed timeout [%s]: %s" % (url, e))
         return 0
 
-    end_time = time.time()
-    elapsed_time = end_time - start_time
+    except requests.exceptions.RequestException as e:
+        print("test_download_speed request failed [%s]: %s" % (url, e))
+        return 0
 
-    down_speed_byte = round(len(data) / elapsed_time, 2)  # Calculate speed based on the data length
+    elapsed_time = time.monotonic() - start_time
+    # protection agains extremely unlikely clock anomaly or a zero-duration measurement
+    if elapsed_time <= 0:
+        return 0
 
-    # Explicitly discard the accumulated data
-    del data
-
-    return down_speed_byte * 8
+    return round(total_bytes / elapsed_time * 8, 2)
 
 
 def get_nice_timestamp(fmt="%Y-%m-%d*%H:%M:%S", t=None):
@@ -858,8 +863,8 @@ def main():
         print("Press F1 for a manual ping, F2 for manual speed test\n")
     show_download_speed()
 
-    last_60min_mark = time.time()
-    last_24hours_mark = time.time()
+    last_60min_mark = time.monotonic()
+    last_24hours_mark = time.monotonic()
     offline_short_cmd_executed = False
     offline_long_cmd_executed = False
     first_offline_time = 0
@@ -870,7 +875,7 @@ def main():
 
     while True:
         timedate_stamp = get_nice_timestamp()
-        current_time = time.time()
+        current_time = time.monotonic()
 
         # Check if 60 minutes have passed
         hours_passed = (current_time - last_60min_mark) / 3600
