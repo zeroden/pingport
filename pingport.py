@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.52"
+PINGPORT_VERSION = "v0.53"
 
 import socket
 import time
@@ -868,6 +868,7 @@ def main():
     offline_short_cmd_executed = False
     offline_long_cmd_executed = False
     first_offline_time = 0
+    first_offline_time_dur = 0
     hour_count = 0
     day_count = 0
     day_ping_attempts = 0
@@ -875,12 +876,12 @@ def main():
 
     while True:
         timedate_stamp = get_nice_timestamp()
-        current_time = time.monotonic()
+        current_time_dur = time.monotonic()
 
         # Check if 60 minutes have passed
-        hours_passed = (current_time - last_60min_mark) / 3600
+        hours_passed = (current_time_dur - last_60min_mark) / 3600
         if hours_passed >= 1:
-            last_60min_mark = current_time
+            last_60min_mark = current_time_dur
             hour_count += 1
             if hours_passed >= 2:
                 hours_msg = f"{hostname} slept {hours_passed} hours"
@@ -894,9 +895,9 @@ def main():
 
         # Check if 24 hours have passed
         # print day stat
-        if current_time - last_24hours_mark >= 24 * 60 * 60:
+        if current_time_dur - last_24hours_mark >= 24 * 60 * 60:
             # reset day marker
-            last_24hours_mark = current_time
+            last_24hours_mark = current_time_dur
             day_count += 1
             perc = get_percentage(day_ping_attempts, day_ping_ok)
             partial = ""
@@ -955,11 +956,11 @@ def main():
         # ping ok
         if result:
             day_ping_ok += 1
-            if first_offline_time:
+            if first_offline_time_dur:
                 offline_msg = f"{hostname} availability\n{get_nice_timestamp(t=first_offline_time)} offline\n"
-                offline_time_dur_raw = current_time - first_offline_time
+                offline_time_dur_raw = current_time_dur - first_offline_time_dur
                 # reset offline period
-                first_offline_time = 0
+                first_offline_time_dur = 0
                 # reset offline commands
                 offline_short_cmd_executed = False
                 offline_long_cmd_executed = False
@@ -979,17 +980,18 @@ def main():
             PING_FAILS += 1
 
             # we now offline so init first offline time
-            if not first_offline_time:
-                first_offline_time = current_time
+            if not first_offline_time_dur:
+                first_offline_time_dur = current_time_dur
+                first_offline_time = time.time()
 
             # after some offline time exec cmds
-            if ARGS.offline_short_cmd and not offline_short_cmd_executed and current_time - first_offline_time >= ARGS.offline_short_timeout:
+            if ARGS.offline_short_cmd and not offline_short_cmd_executed and current_time_dur - first_offline_time_dur >= ARGS.offline_short_timeout:
                 print(f"short offline command activated [{ARGS.offline_short_cmd}]")
                 # exec cmd only once for each offline period
                 offline_short_cmd_executed = True
                 # exec cmd
                 subprocess.Popen(ARGS.offline_short_cmd, shell=True)
-            if ARGS.offline_long_cmd and not offline_long_cmd_executed and current_time - first_offline_time >= ARGS.offline_long_timeout:
+            if ARGS.offline_long_cmd and not offline_long_cmd_executed and current_time_dur - first_offline_time_dur >= ARGS.offline_long_timeout:
                 print(f"long offline command activated [{ARGS.offline_long_cmd}]")
                 # exec cmd only once for each offline period
                 offline_long_cmd_executed = True
