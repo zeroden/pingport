@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.53"
+PINGPORT_VERSION = "v0.54"
 
 import socket
 import time
@@ -343,7 +343,6 @@ def show_download_speed(msg = ""):
     if down_speed_3_4:
         print(", glo " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
-    timedate_stamp = get_nice_timestamp()
     tg_msg = f"{get_hostname()} ▒ ping {ping:>3} ▒ speed {down_speed_1_2:>4} - {down_speed_3_4:>4}"
 
     # gather speed stats
@@ -405,6 +404,7 @@ def show_download_speed(msg = ""):
     if not os.path.exists(speed_file):
         with open(speed_file, "a") as myfile:
             myfile.write("DATETIME,PING,GLOB,LOC,YT\n")
+    timedate_stamp = get_nice_timestamp()
     with open(speed_file, "a") as myfile:
         myfile.write(f"{timedate_stamp},{ping},{down_speed_1_2},{down_speed_3_4},{down_speed_5}\n")
 
@@ -505,7 +505,6 @@ def ping_host(host):
 def show_ping(host):
     global STATS
 
-    timedate_stamp = get_nice_timestamp()
     # ping using classical ping
     ret_ping = ping_host(host)
     if ret_ping >= 0:
@@ -527,6 +526,7 @@ def show_ping(host):
             STATS["all_ping_min_time"] = datetime.datetime.now()
         print(Style.BRIGHT + Fore.GREEN + "%d" % ret_ping, end="")
     else:
+        timedate_stamp = get_nice_timestamp()
         print(LAST_NEWLINE_INVERTED + Style.BRIGHT + Fore.RED + "%s ping down %d" % (timedate_stamp, PING_FAILS + 1))
 
     sock = 0
@@ -544,6 +544,7 @@ def show_ping(host):
     if ret_sock == 0:
         print(Style.BRIGHT + Fore.GREEN + ".", end="");
     else:
+        timedate_stamp = get_nice_timestamp()
         print(LAST_NEWLINE_INVERTED + Style.BRIGHT + Fore.RED + "%s conn down %d" % (timedate_stamp, PING_FAILS + 1))
 
     # successful only if both type of pings are ok
@@ -796,10 +797,10 @@ def main():
 
     logfilename = get_nice_timestamp("pingport_%Y%m%d_%H%M%S.log")
     dupe_console_to_file(logfilename)
-    timedate_stamp = get_nice_timestamp()
     hostname = get_hostname()
-
     tg_msg = (s := f"pingport {PINGPORT_VERSION} started @ {hostname}") + "\n"
+
+    timedate_stamp = get_nice_timestamp()
     print(Style.BRIGHT + Fore.CYAN + timedate_stamp + " " + s)
 
     tg_msg += (s := f"python version: \"{sys.version}\"") + "\n"
@@ -846,6 +847,7 @@ def main():
     # Insert in url a character that is invisible to humans, but breaks Telegram’s link detection
     # The most useful one is: zero width space → \u200b
     tg_msg = tg_msg.replace(".", ".\u200b")
+    timedate_stamp = get_nice_timestamp()
     send_telegram(timedate_stamp + " " + tg_msg)
 
     if ARGS.offline_short_cmd:
@@ -875,9 +877,7 @@ def main():
     day_ping_ok = 0
 
     while True:
-        timedate_stamp = get_nice_timestamp()
         current_time_dur = time.monotonic()
-
         # Check if 60 minutes have passed
         hours_passed = (current_time_dur - last_60min_mark) / 3600
         if hours_passed >= 1:
@@ -890,11 +890,13 @@ def main():
                 send_telegram(hours_msg)
                 # wait some time after unsleep to allow network up
                 custom_sleep(10)
+            timedate_stamp = get_nice_timestamp()
             msg = LAST_NEWLINE_INVERTED + timedate_stamp + " hour%d" % hour_count
             show_download_speed(msg)
 
         # Check if 24 hours have passed
         # print day stat
+        current_time_dur = time.monotonic()
         if current_time_dur - last_24hours_mark >= 24 * 60 * 60:
             # reset day marker
             last_24hours_mark = current_time_dur
@@ -903,6 +905,7 @@ def main():
             partial = ""
             if day_ping_attempts != day_ping_ok:
                 partial = "partial "
+            timedate_stamp = get_nice_timestamp()
             day_msg_pre = f"{timedate_stamp} {get_hostname()} day{day_count}\n"
             print(LAST_NEWLINE_INVERTED + Style.BRIGHT + "\n" + day_msg_pre, end = "")
             day_msg = f"up: {partial}{perc}%, {day_ping_ok} outof {day_ping_attempts} {PING_FAILS_STR}\n"
@@ -958,6 +961,7 @@ def main():
             day_ping_ok += 1
             if first_offline_time_dur:
                 offline_msg = f"{hostname} availability\n{get_nice_timestamp(t=first_offline_time)} offline\n"
+                current_time_dur = time.monotonic()
                 offline_time_dur_raw = current_time_dur - first_offline_time_dur
                 # reset offline period
                 first_offline_time_dur = 0
@@ -965,6 +969,7 @@ def main():
                 offline_short_cmd_executed = False
                 offline_long_cmd_executed = False
                 offline_time_dur_nice = nice_duration(offline_time_dur_raw)
+                timedate_stamp = get_nice_timestamp()
                 offline_msg += f"{timedate_stamp} online\ndowntime is {offline_time_dur_nice}"
                 STATS["day_down_count"] += 1
                 if offline_time_dur_raw > STATS["day_down_longest"]:
@@ -981,6 +986,7 @@ def main():
 
             # we now offline so init first offline time
             if not first_offline_time_dur:
+                current_time_dur = time.monotonic()
                 first_offline_time_dur = current_time_dur
                 first_offline_time = time.time()
 
