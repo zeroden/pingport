@@ -232,7 +232,7 @@ def get_nice_timestamp(fmt="%Y-%m-%d*%H:%M:%S", t=None):
     return time.strftime(fmt, t)
 
 
-def send_telegram_worker(text, parse_mode=None, target_channel=1):
+def send_telegram_impl(text, parse_mode=None, target_channel=1):
     if not ARGS.telegram_update:
         return True
     channel1 = ARGS.telegram_update
@@ -257,7 +257,7 @@ def send_telegram_worker(text, parse_mode=None, target_channel=1):
         data = {"chat_id": bot_chat_id, "text": text, "disable_web_page_preview": True}
         if parse_mode:
             data["parse_mode"] = parse_mode
-        response = requests.post(api_url, data=data)
+        response = requests.post(api_url, data=data, timeout=(5, 10))
         if not response.ok:
             print(f"{get_nice_timestamp()} ," + f"Telegram error: {response.status_code} - {response.text}")
             return False
@@ -274,15 +274,15 @@ def send_telegram(text, parse_mode=None, target_channel=1):
     if SEND_TELEGRAM_FAILS:
         text += f"\n(tg fails {SEND_TELEGRAM_FAILS})"
 
-    ret = send_telegram_worker(text, parse_mode, target_channel)
+    ret = send_telegram_impl(text, parse_mode, target_channel)
     if not ret:
         print("tg try 2")
         custom_sleep(10)
-        ret = send_telegram_worker(text, parse_mode, target_channel)
+        ret = send_telegram_impl(text, parse_mode, target_channel)
         if not ret:
             print("tg try 3")
             custom_sleep(60)
-            ret = send_telegram_worker(text, parse_mode, target_channel)
+            ret = send_telegram_impl(text, parse_mode, target_channel)
 
     if ret:
         SEND_TELEGRAM_FAILS = 0
