@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.57"
+PINGPORT_VERSION = "v0.58"
 
 import socket
 import time
@@ -579,7 +579,7 @@ def GetCommandLine():
     return cmdline
 
 
-def get_local_ip():
+def get_primary_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         # use a public IP, Google DNS for example, port doesn't matter
@@ -590,6 +590,24 @@ def get_local_ip():
     finally:
         s.close()
     return ip
+
+
+def get_local_ips():
+    output = subprocess.check_output(
+        ["ip", "-4", "-o", "addr", "show"],
+        text=True
+    )
+
+    ips = []
+
+    for line in output.splitlines():
+        parts = line.split()
+        interface = parts[1]
+        address = parts[3].split("/")[0]
+
+        ips.append((address, interface))
+
+    return ips
 
 
 def get_uptime():
@@ -824,11 +842,19 @@ def main():
     except Exception as e:
         tg_msg += (s := f"host to ping ip: failed - {str(e)}") + "\n"
         print(s)
-    loc_ip = get_local_ip()
-    tg_msg += (s := f"local ip: \"{loc_ip}\"") + "\n"
+
+    prim_loc_ip = get_primary_local_ip()
+    tg_msg += (s := f"primary local ip: \"{prim_loc_ip}\"") + "\n"
     print(s)
-    tg_msg += (s := f"local ip reverse: \"{reverse_ip(loc_ip)}\"") + "\n"
+    tg_msg += (s := f"primary local ip reverse: \"{reverse_ip(prim_loc_ip)}\"") + "\n"
     print(s)
+
+    for ip, interface in get_local_ips():
+        tg_msg += (s := f"local ip: \"{ip} {interface}\"") + "\n"
+        print(s)
+        tg_msg += (s := f"local ip reverse: \"{reverse_ip(ip)}\"") + "\n"
+        print(s)
+
     try:
         wan_ip = get("https://api.ipify.org").content.decode("utf8")
         tg_msg += (s := f"wan ip: \"{wan_ip}\"") + "\n"
