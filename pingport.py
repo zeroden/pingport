@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.56"
+PINGPORT_VERSION = "v0.57"
 
 import socket
 import time
@@ -291,7 +291,7 @@ def send_telegram(text, parse_mode=None, target_channel=1):
 
 
 def get_hostname():
-    return socket.getfqdn()
+    return socket.gethostname()
 
 
 def show_download_speed(msg = ""):
@@ -556,8 +556,7 @@ def reverse_ip(ip):
     try:
         hostname = socket.gethostbyaddr(ip)[0]
     except socket.herror:
-        # fallback: get fqdn of local ip
-        hostname = get_hostname()
+        hostname = ip
     return hostname
 
 
@@ -811,6 +810,8 @@ def main():
     tg_msg += (s := f"log: \"{logfilename}\"") + "\n"
     print(s)
     tg_msg += (s := f"hostname: {hostname}") + "\n"
+    print(s)
+    tg_msg += (s := f"hostname full: {socket.getfqdn()}") + "\n"
     print(s)
     tg_msg += (s := f"host to ping: \"{ARGS.host_to_ping}\"") + "\n"
     print(s)
