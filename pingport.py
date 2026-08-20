@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.58"
+PINGPORT_VERSION = "v0.59"
 
 import socket
 import time
@@ -774,6 +774,10 @@ def get_os():
     return osinfo
 
 
+def vcgencmd(command):
+    return subprocess.check_output(["vcgencmd", command], text=True).strip()
+
+
 def get_system_info(extended = True):
 
     s = f"{get_hostname()} uptime: {get_uptime()}\n"
@@ -789,7 +793,16 @@ def get_system_info(extended = True):
     s += f"memory: total {mem['total_h']}, free {mem['free_h']}\n"
 
     cpu = get_cpu_load_percent()
-    s += f"cpu: {cpu:.0f}%"
+    s += f"cpu: {cpu:.0f}%\n"
+
+    # pi status
+    frequency_hz = int(re.search(r"=(\d+)", vcgencmd("measure_clock arm")).group(1))
+    frequency_mhz = frequency_hz / 1_000_000
+    temperature = float(re.search(r"([\d.]+)", vcgencmd("measure_temp")).group(1))
+    throttled = vcgencmd("get_throttled").split("=")[1]
+    s += f"frequency: {frequency_mhz:.0f} MHz\n"
+    s += f"temperature: {temperature:.1f} °C\n"
+    s += f"throttled: {throttled}"
 
     return s
 
