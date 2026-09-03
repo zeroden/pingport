@@ -1,4 +1,4 @@
-PINGPORT_VERSION = "v0.59"
+PINGPORT_VERSION = "v0.60"
 
 import socket
 import time
@@ -34,6 +34,8 @@ import argparse
 import datetime
 import psutil
 import shutil
+import board
+import adafruit_dht
 
 PING_FAILS = 0
 PING_FAILS_STR = ""
@@ -344,6 +346,10 @@ def show_download_speed(msg = ""):
         print(", glo " + Style.BRIGHT + Fore.YELLOW + f"{down_speed_3_4}" + Style.RESET_ALL + "mbit", end="")
 
     tg_msg = f"{get_hostname()} ▒ ping {ping:>3} ▒ speed {down_speed_1_2:>4} - {down_speed_3_4:>4}"
+    if is_raspberry_pi():
+        temperature = get_raspberry_temp()
+        temperature_ext = get_raspberry_external_temp()
+        tg_msg += f" ▒ {temperature}/{temperature_ext}c"
 
     # gather speed stats
 
@@ -778,6 +784,33 @@ def vcgencmd(command):
     return subprocess.check_output(["vcgencmd", command], text=True).strip()
 
 
+def is_raspberry_pi():
+    try:
+        with open("/proc/device-tree/model") as f:
+            return "Raspberry Pi" in f.read()
+    except FileNotFoundError:
+        return False
+
+def get_raspberry_temp():
+    return round(float(re.search(r"([\d.]+)", vcgencmd("measure_temp")).group(1)), 1)
+
+def get_raspberry_external_temp():
+    dht = None
+    temp = None
+    try:
+        # change this if you use another GPIO
+        dht = adafruit_dht.DHT22(board.D4)
+        temp = dht.temperature
+
+    except Exception as e:
+        print("temperature read error:", e)
+
+    finally:
+        if dht is not None:
+            dht.exit()
+
+    return temp
+
 def get_system_info(extended = True):
 
     s = f"{get_hostname()} uptime: {get_uptime()}\n"
@@ -796,14 +829,17 @@ def get_system_info(extended = True):
     s += f"cpu: {cpu:.0f}%\n"
 
     # pi status
-    frequency_hz = int(re.search(r"=(\d+)", vcgencmd("measure_clock arm")).group(1))
-    frequency_mhz = frequency_hz / 1_000_000
-    temperature = float(re.search(r"([\d.]+)", vcgencmd("measure_temp")).group(1))
-    throttled = vcgencmd("get_throttled").split("=")[1]
-    s += f"frequency: {frequency_mhz:.0f} MHz\n"
-    s += f"temperature: {temperature:.1f} °C\n"
-    s += f"throttled: {throttled}"
+    if is_raspberry_pi():
+        frequency_hz = int(re.search(r"=(\d+)", vcgencmd("measure_clock arm")).group(1))
+        frequency_mhz = frequency_hz / 1_000_000
+        temperature = get_raspberry_temp()
+        temperature_ext = get_raspberry_external_temp()
+        throttled = vcgencmd("get_throttled").split("=")[1]
+        s += f"frequency: {frequency_mhz:.0f} MHz\n"
+        s += f"temperature: {temperature}/{temperature_ext} °C\n"
+        s += f"throttled: {throttled}\n"
 
+    s = s.rstrip("\n")
     return s
 
 
