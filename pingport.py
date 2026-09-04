@@ -794,22 +794,35 @@ def is_raspberry_pi():
 def get_raspberry_temp():
     return round(float(re.search(r"([\d.]+)", vcgencmd("measure_temp")).group(1)), 1)
 
-def get_raspberry_external_temp():
+def get_temperature_worker():
     dht = None
-    temp = None
     try:
         # change this if you use another GPIO
         dht = adafruit_dht.DHT22(board.D4)
-        temp = dht.temperature
 
+        temperature = round(dht.temperature, 1)
+       
+        return temperature
+    
     except Exception as e:
-        print("temperature read error:", e)
+        print(f"DHT read error: {e}")
+        return None
 
     finally:
         if dht is not None:
             dht.exit()
 
-    return temp
+def get_raspberry_external_temp():
+    temperature = get_temperature_worker()
+    if temperature is None:
+        # Failed - wait randomly seconds between attempts
+        time.sleep(random.randint(1, 30))
+        temperature = get_temperature_worker()
+        if temperature is None:
+            time.sleep(random.randint(10, 300))
+            temperature = get_temperature_worker()
+
+    return temperature
 
 def get_system_info(extended = True):
 
